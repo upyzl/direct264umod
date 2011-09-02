@@ -288,6 +288,7 @@ void x264_adaptive_quant_frame( x264_t *h, x264_frame_t *frame, float *quant_off
     int mb_x, mb_y, i;
     float strength;
     float avg_adj = 0.f;
+    float avg_offset = 0.f;
     /* Initialize frame stats */
     for( i = 0; i < 3; i++ )
     {
@@ -332,7 +333,7 @@ void x264_adaptive_quant_frame( x264_t *h, x264_frame_t *frame, float *quant_off
     /* Actual adaptive quantization */
     else
     {
-        if( h->param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE )
+        if( h->param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE || h->param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE_MOD )
         {
             float bit_depth_correction = powf(1 << (BIT_DEPTH-8), 0.5f);
             float avg_adj_pow2 = 0.f;
@@ -348,7 +349,7 @@ void x264_adaptive_quant_frame( x264_t *h, x264_frame_t *frame, float *quant_off
             avg_adj /= h->mb.i_mb_count;
             avg_adj_pow2 /= h->mb.i_mb_count;
             strength = h->param.rc.f_aq_strength * avg_adj / bit_depth_correction;
-            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (14.f * bit_depth_correction)) / avg_adj;
+            avg_offset = avg_adj - 0.5f * (avg_adj_pow2 - (14.f * bit_depth_correction)) / avg_adj;
         }
         else
             strength = h->param.rc.f_aq_strength * 1.0397f;
@@ -358,10 +359,15 @@ void x264_adaptive_quant_frame( x264_t *h, x264_frame_t *frame, float *quant_off
             {
                 float qp_adj;
                 int mb_xy = mb_x + mb_y*h->mb.i_mb_stride;
-                if( h->param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE )
+                if( h->param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE_MOD )
                 {
                     qp_adj = frame->f_qp_offset[mb_xy];
-                    qp_adj = strength * (qp_adj - avg_adj);
+                    qp_adj = strength * (qp_adj - avg_offset + (1.f - 14.f / (qp_adj * qp_adj)) / avg_adj);
+                }
+                else if( h->param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE )
+                {
+                    qp_adj = frame->f_qp_offset[mb_xy];
+                    qp_adj = strength * (qp_adj - avg_offset);
                 }
                 else
                 {
