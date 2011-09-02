@@ -36,6 +36,7 @@ typedef struct
 
     int bit_depth;
     int dst_csp;
+    int full_range;
     cli_pic_t buffer;
     int16_t *error_buf;
 } depth_hnd_t;
@@ -63,7 +64,7 @@ static int csp_num_interleaved( int csp, int plane )
  * depth again is lossless. */
 #define DITHER_PLANE( pitch ) \
 static void dither_plane_##pitch( pixel *dst, int dst_stride, uint16_t *src, int src_stride, \
-                                        int width, int height, int16_t *errors ) \
+                                        int width, int height, int16_t *errors, int full_range ) \
 { \
     int x, y; \
     const int lshift = 16-BIT_DEPTH; \
@@ -79,6 +80,10 @@ static void dither_plane_##pitch( pixel *dst, int dst_stride, uint16_t *src, int
             err = err*2 + errors[x] + errors[x+1]; \
             dst[x*pitch] = x264_clip3( (((src[x*pitch]+half)<<2)+err)*pixel_max >> 18, 0, pixel_max ); \
             errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift) - (dst[x*pitch] >> rshift); \
+            if( full_range ) \
+               errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift) - (dst[x*pitch] >> rshift); \
+            else \
+               errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift); \
         } \
     } \
 }
@@ -86,7 +91,7 @@ static void dither_plane_##pitch( pixel *dst, int dst_stride, uint16_t *src, int
 DITHER_PLANE( 1 )
 DITHER_PLANE( 2 )
 
-static void dither_image( cli_image_t *out, cli_image_t *img, int16_t *error_buf )
+static void dither_image( cli_image_t *out, cli_image_t *img, int16_t *error_buf, int full_range )
 {
     int i;
     int csp_mask = img->csp & X264_CSP_MASK;
@@ -98,7 +103,7 @@ static void dither_image( cli_image_t *out, cli_image_t *img, int16_t *error_buf
 
 #define CALL_DITHER_PLANE( pitch, off ) \
         dither_plane_##pitch( ((pixel*)out->plane[i])+off, out->stride[i]/sizeof(pixel), \
-                ((uint16_t*)img->plane[i])+off, img->stride[i]/2, width, height, error_buf )
+                ((uint16_t*)img->plane[i])+off, img->stride[i]/2, width, height, error_buf, full_range )
 
         if( num_interleaved == 1 )
         {
@@ -112,7 +117,7 @@ static void dither_image( cli_image_t *out, cli_image_t *img, int16_t *error_buf
     }
 }
 
-static void scale_image( cli_image_t *output, cli_image_t *img )
+static void scale_image( cli_image_t *output, cli_image_t *img, int full_range )
 {
     int i;
     /* this function mimics how swscale does upconversion. 8-bit is converted
@@ -121,7 +126,8 @@ static void scale_image( cli_image_t *output, cli_image_t *img )
      * while also being fast. for n-bit we basically do the same thing, but we
      * discard the lower 16-n bits. */
     int csp_mask = img->csp & X264_CSP_MASK;
-    const int shift = 16-BIT_DEPTH;
+     /* Decide the amount of shift needed by the type of color range */
+    const int shift = full_range ? 16 - BIT_DEPTH : BIT_DEPTH - 8;
     for( i = 0; i < img->planes; i++ )
     {
         int j, k;
@@ -133,7 +139,14 @@ static void scale_image( cli_image_t *output, cli_image_t *img )
         for( j = 0; j < height; j++ )
         {
             for( k = 0; k < width; k++ )
-                dst[k] = ((src[k] << 8) + src[k]) >> shift;
+            {
+                if( full_range )
+                    /* x264's original algorithm */
+                    dst[k] = ((src[k] << 8) + src[k]) >> shift;
+                else
+                    /* Limited range algorithm mentioned in BT.709 */
+                    dst[k] = src[k] << shift;
+             }
 
             src += img->stride[i];
             dst += output->stride[i]/2;
@@ -150,12 +163,12 @@ static int get_frame( hnd_t handle, cli_pic_t *output, int frame )
 
     if( h->bit_depth < 16 && output->img.csp & X264_CSP_HIGH_DEPTH )
     {
-        dither_image( &h->buffer.img, &output->img, h->error_buf );
+        dither_image( &h->buffer.img, &output->img, h->error_buf, h->full_range );
         output->img = h->buffer.img;
     }
     else if( h->bit_depth > 8 && !(output->img.csp & X264_CSP_HIGH_DEPTH) )
     {
-        scale_image( &h->buffer.img, &output->img );
+        scale_image( &h->buffer.img, &output->img, h->full_range );
         output->img = h->buffer.img;
     }
     return 0;
@@ -189,6 +202,9 @@ static int init( hnd_t *handle, cli_vid_filter_t *filter, video_info_t *info,
     int change_fmt = (info->csp ^ param->i_csp) & X264_CSP_HIGH_DEPTH;
     int csp = ~(~info->csp ^ change_fmt);
     int bit_depth = 8*x264_cli_csp_depth_factor( csp );
+    int full_range = info->full_range;
+    if( full_range != 1 )
+        full_range = 0;
 
     if( opt_string )
     {
@@ -224,6 +240,7 @@ static int init( hnd_t *handle, cli_vid_filter_t *filter, video_info_t *info,
 
         h->error_buf = (int16_t*)(h + 1);
         h->dst_csp = csp;
+        h->full_range = full_range;
         h->bit_depth = bit_depth;
         h->prev_hnd = *handle;
         h->prev_filter = *filter;
