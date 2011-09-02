@@ -1313,6 +1313,13 @@ x264_t *x264_encoder_open( x264_param_t *param )
             profile, level, CHROMA444 ? "4:4:4" : "4:2:0", BIT_DEPTH );
     }
 
+    char *opts = x264_param2string( &h->param, 0 );
+    if( opts )
+    {
+        x264_log( h, X264_LOG_INFO, "%s\n", opts );
+        x264_free( opts );
+    }
+
     return h;
 fail:
     x264_free( h );
