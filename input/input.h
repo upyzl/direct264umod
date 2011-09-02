@@ -61,6 +61,7 @@ typedef struct
     uint32_t timebase_den;
     int vfr;
     int width;
+    int full_range;
 } video_info_t;
 
 /* image data type used by x264cli */
