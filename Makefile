@@ -198,17 +198,18 @@ endif
 
 SRC2 = $(SRCS) $(SRCCLI)
 # These should cover most of the important codepaths
-OPT0 = --crf 30 -b1 -m1 -r1 --me dia --no-cabac --direct temporal --ssim --no-weightb --weightp 0
+OPT0 = --crf 30 -b1 -m1 -r1 --me dia --no-cabac --direct temporal --tune ssim --ssim --no-weightb --weightp 0 --b-pyramid 0 --vf resize:640,360,,,,lanczos/pad:0,60,0,60
 ifeq ($(MP4),yes)
 OPT0 += -o tmpout.mp4
 endif
-OPT1 = --crf 16 -b2 -m3 -r3 --me hex --no-8x8dct --direct spatial --no-dct-decimate -t0 --rc-lookahead 0 --slice-max-mbs 50 --weightp 1
-OPT2 = --crf 26 -b4 -m5 -r2 --me hex --cqm jvt --nr 100 --psnr --no-mixed-refs --b-adapt 2 -o tmpout.avi --slice-max-size 1500 --weightp 1
-OPT3 = --crf 18 -b3 -m9 -r5 --me umh -t1 -A all --b-pyramid normal --direct auto --no-fast-pskip --no-mbtree --weightp 2
-OPT4 = --crf 22 -b3 -m7 -r4 --me esa -t2 -A all --psy-rd 1.0:1.0 --slices 4 --weightp 2
-OPT5 = --frames 50 --crf 24 -b3 -m10 -r3 --me tesa -t2 -o tmpout.mkv --weightp 2
-OPT6 = --frames 50 -q0 -m9 -r2 --me hex -Aall
-OPT7 = --frames 50 -q0 -m2 -r1 --me hex --no-cabac
+OPT1 = --crf 16 -b2 -m3 -r3 -i1 --me hex --no-8x8dct --direct spatial --no-dct-decimate -t0 --rc-lookahead 0 --slice-max-mbs 50 --weightp 1 --b-pyramid 1 -I infinite --nr 100 --fade-compensate 0.5
+OPT2 = --crf 26 -b4 -m5 -r2 --me umh --merange 64 --cqm jvt --tune psnr --psnr --no-mixed-refs --b-adapt 2 -o tmpout.avi --slice-max-size 1500 --weightp 1 --b-pyramid 1 --vf hqdn3d
+OPT3 = --crf 18 --b-adapt 0 -b3 -m9 -r5 --me umh -t1 -A all --b-pyramid normal --direct auto --no-fast-pskip --no-mbtree --weightp 2 --fgo 10 --vf crop:16,16,16,16
+OPT4 = --crf 22 -b3 -m7 -r4 --me esa -t2 -A all --psy-rd 1.0:1.0 --slices 4 --weightp 2 --vf select_every:2,0
+OPT5 = --frames 100 --crf 24 -b3 -m10 -r3 --me umh -t2 -o tmpout.mkv --weightp 2 
+OPT6 = --frames 100 -q0 -m9 -r2 --me hex -Aall --direct none
+OPT7 = --frames 100 -q0 -m2 -r1 -t0 --me hex --no-cabac
+OPT8 = --frames 50 -m11 --me tesa -t2 --aq-mode 3
 
 ifeq (,$(VIDS))
 fprofiled:
