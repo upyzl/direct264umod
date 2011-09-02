@@ -76,8 +76,8 @@
 #endif
 
 #ifndef X264_VERSION
-#define X264_VERSION " r2074" // no configure script for msvc
-#define X264_POINTVER "0.116.2074"
+#define X264_VERSION "r2074+396_dshow_umod" // no configure script for msvc
+#define X264_POINTVER "0.116.2074.396.uPyMod"
 #endif
 
 #if !defined(isfinite) && (SYS_OPENBSD || SYS_SunOS)

@@ -77,7 +77,7 @@ PIXEL_SAD_C( x264_pixel_sad_4x4,    4,  4 )
  ****************************************************************************/
 #define PIXEL_SSD_C( name, lx, ly ) \
 static int name( pixel *pix1, int i_stride_pix1,  \
-                 pixel *pix2, int i_stride_pix2 ) \
+                 pixel *pix2, int i_stride_pix2, int weight ) \
 {                                                   \
     int i_sum = 0;                                  \
     int x, y;                                       \
@@ -102,6 +102,75 @@ PIXEL_SSD_C( x264_pixel_ssd_8x4,    8,  4 )
 PIXEL_SSD_C( x264_pixel_ssd_4x8,    4,  8 )
 PIXEL_SSD_C( x264_pixel_ssd_4x4,    4,  4 )
 
+#define PIXEL_NOISE_C( lx, ly ) \
+static int x264_pixel_noise_##lx##x##ly( pixel *pix, int i_stride ) \
+{\
+    int score = 0;\
+    for( int y = 0; y < ly; y++ ){\
+        if( y+1 < ly ){\
+            for( int x = 0; x < lx-1; x++ )\
+                score += abs(  pix[x]   - pix[x+i_stride]\
+                             - pix[x+1] + pix[x+1+i_stride]);\
+        }\
+        pix += i_stride;\
+    }\
+    return score;\
+}
+
+PIXEL_NOISE_C( 16, 16 )
+PIXEL_NOISE_C( 16,  8 )
+PIXEL_NOISE_C(  8, 16 )
+PIXEL_NOISE_C(  8,  8 )
+PIXEL_NOISE_C(  8,  4 )
+PIXEL_NOISE_C(  4,  8 )
+PIXEL_NOISE_C(  4,  4 )
+
+#define PIXEL_NSSD( nssdname, lx, ly, ssdname, noisename )\
+static int x264_pixel_nssd_##lx##x##ly##nssdname( pixel *pix1, int i_stride_pix1, \
+                                                  pixel *pix2, int i_stride_pix2, int weight ) \
+{\
+    int ssd = x264_pixel_ssd_##lx##x##ly##ssdname( pix1, i_stride_pix1, \
+                                                   pix2, i_stride_pix2, weight );\
+    int noise1 = x264_pixel_noise_##lx##x##ly##noisename( pix1, i_stride_pix1 );\
+    int noise2 = x264_pixel_noise_##lx##x##ly##noisename( pix2, i_stride_pix2 );\
+    return ssd + abs(noise1 - noise2) * weight;\
+}
+#define PIXEL_NSSD5( nssdname, ssdname, noisename )\
+    PIXEL_NSSD( nssdname, 16, 16, ssdname, noisename )\
+    PIXEL_NSSD( nssdname, 16,  8, ssdname, noisename )\
+    PIXEL_NSSD( nssdname,  8, 16, ssdname, noisename )\
+    PIXEL_NSSD( nssdname,  8,  8, ssdname, noisename )\
+    PIXEL_NSSD( nssdname,  8,  4, ssdname, noisename )
+#define PIXEL_NSSD2( nssdname, ssdname, noisename )\
+    PIXEL_NSSD( nssdname,  4,  8, ssdname, noisename )\
+    PIXEL_NSSD( nssdname,  4,  4, ssdname, noisename )
+#define PIXEL_NSSD7( nssdname, ssdname, noisename )\
+    PIXEL_NSSD5( nssdname, ssdname, noisename )\
+    PIXEL_NSSD2( nssdname, ssdname, noisename )
+
+PIXEL_NSSD7( , , )
+#if HIGH_BIT_DEPTH
+#if HAVE_MMX
+PIXEL_NSSD7( _mmx2, _mmx2, )
+PIXEL_NSSD5( _sse2, _sse2, )
+#endif
+#else
+#if HAVE_MMX
+PIXEL_NSSD7( _mmx, _mmx, )
+PIXEL_NSSD5( _mmx2, _mmx, _mmx2 )
+PIXEL_NSSD2( _mmx2, _mmx, )
+PIXEL_NSSD5( _sse2slow, _sse2slow, _mmx2 )
+PIXEL_NSSD5( _sse2, _sse2, _mmx2 )
+PIXEL_NSSD5( _ssse3, _ssse3, _mmx2 )
+PIXEL_NSSD2( _ssse3, _ssse3, )
+PIXEL_NSSD5( _avx, _avx, _mmx2 )
+#endif
+#if HAVE_ARMV6
+PIXEL_NSSD5( _neon, _neon, )
+PIXEL_NSSD2( _neon, _neon, )
+#endif
+#endif // HIGH_BIT_DEPTH
+
 uint64_t x264_pixel_ssd_wxh( x264_pixel_function_t *pf, pixel *pix1, int i_pix1, pixel *pix2, int i_pix2, int i_width, int i_height )
 {
     uint64_t i_ssd = 0;
@@ -109,7 +178,7 @@ uint64_t x264_pixel_ssd_wxh( x264_pixel_function_t *pf, pixel *pix1, int i_pix1,
     int align = !(((intptr_t)pix1 | (intptr_t)pix2 | i_pix1 | i_pix2) & 15);
 
 #define SSD(size) i_ssd += pf->ssd[size]( pix1 + y*i_pix1 + x, i_pix1, \
-                                          pix2 + y*i_pix2 + x, i_pix2 );
+                                          pix2 + y*i_pix2 + x, i_pix2, 0 );
     for( y = 0; y < i_height-15; y += 16 )
     {
         x = 0;
@@ -775,6 +844,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
     INIT7( sad_x3, );
     INIT7( sad_x4, );
     INIT7( ssd, );
+    INIT7( nssd, );
     INIT7( satd, );
     INIT7( satd_x3, );
     INIT7( satd_x4, );
@@ -813,6 +883,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         INIT7( satd_x4, _mmx2 );
         INIT4( hadamard_ac, _mmx2 );
         INIT7( ssd, _mmx2 );
+	INIT7( nssd, _mmx2 );
         INIT_ADS( _mmx2 );
 
         pixf->ssd_nv12_core = x264_pixel_ssd_nv12_core_mmx2;
@@ -832,6 +903,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
     {
         INIT4_NAME( sad_aligned, sad, _sse2_aligned );
         INIT5( ssd, _sse2 );
+        INIT5( nssd, _sse2 );
 
         pixf->sa8d[PIXEL_16x16] = x264_pixel_sa8d_16x16_sse2;
         pixf->sa8d[PIXEL_8x8]   = x264_pixel_sa8d_8x8_sse2;
@@ -915,6 +987,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
     if( cpu&X264_CPU_MMX )
     {
         INIT7( ssd, _mmx );
+        INIT7( nssd, _mmx );
     }
 
     if( cpu&X264_CPU_MMX2 )
@@ -926,6 +999,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         INIT7( satd, _mmx2 );
         INIT7( satd_x3, _mmx2 );
         INIT7( satd_x4, _mmx2 );
+	INIT7( nssd, _mmx2 );
         INIT4( hadamard_ac, _mmx2 );
         INIT_ADS( _mmx2 );
         pixf->var[PIXEL_16x16] = x264_pixel_var_16x16_mmx2;
@@ -975,6 +1049,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
     if( cpu&X264_CPU_SSE2 )
     {
         INIT5( ssd, _sse2slow );
+        INIT5( nssd, _sse2slow );
         INIT2_NAME( sad_aligned, sad, _sse2_aligned );
         pixf->var[PIXEL_16x16] = x264_pixel_var_16x16_sse2;
         pixf->ssd_nv12_core    = x264_pixel_ssd_nv12_core_sse2;
@@ -1003,7 +1078,8 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         pixf->intra_sad_x3_16x16 = x264_intra_sad_x3_16x16_sse2;
         if( cpu&X264_CPU_CACHELINE_64 )
         {
-            INIT2( ssd, _sse2); /* faster for width 16 on p4 */
+            INIT2( ssd, _sse2 ); /* faster for width 16 on p4 */
+            INIT2( nssd, _sse2 );
 #if ARCH_X86
             INIT2( sad, _cache64_sse2 );
             INIT2( sad_x3, _cache64_sse2 );
@@ -1049,6 +1125,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         if( !(cpu&X264_CPU_SLOW_ATOM) )
         {
             INIT7( ssd, _ssse3 );
+            INIT7( nssd, _ssse3 );
             pixf->sa8d[PIXEL_16x16]= x264_pixel_sa8d_16x16_ssse3;
             pixf->sa8d[PIXEL_8x8]  = x264_pixel_sa8d_8x8_ssse3;
             INIT7( satd, _ssse3 );
@@ -1075,6 +1152,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         if( cpu&X264_CPU_SLOW_ATOM || !(cpu&X264_CPU_SHUFFLE_IS_FAST) )
         {
             INIT5( ssd, _sse2 ); /* on conroe, sse2 is faster for width8/16 */
+            INIT5( nssd, _sse2 );
         }
     }
 
@@ -1100,6 +1178,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
             INIT4( hadamard_ac, _avx );
         }
         INIT5( ssd, _avx );
+        INIT5( nssd, _avx );
 #if ARCH_X86_64
         pixf->sa8d[PIXEL_16x16]= x264_pixel_sa8d_16x16_avx;
         pixf->sa8d[PIXEL_8x8]  = x264_pixel_sa8d_8x8_avx;
@@ -1130,6 +1209,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         INIT7( sad_x3, _neon );
         INIT7( sad_x4, _neon );
         INIT7( ssd, _neon );
+        INIT7( nssd, _neon )
         INIT7( satd, _neon );
         INIT7( satd_x3, _neon );
         INIT7( satd_x4, _neon );

@@ -30,6 +30,7 @@
 // SSD assumes all args aligned
 // other cmp functions assume first arg aligned
 typedef int  (*x264_pixel_cmp_t) ( pixel *, int, pixel *, int );
+typedef int  (*x264_pixel_cmp_weight_t) ( pixel *, int, pixel *, int, int );
 typedef void (*x264_pixel_cmp_x3_t) ( pixel *, pixel *, pixel *, pixel *, int, int[3] );
 typedef void (*x264_pixel_cmp_x4_t) ( pixel *, pixel *, pixel *, pixel *, pixel *, int, int[4] );
 
@@ -72,10 +73,12 @@ static const uint8_t x264_size2pixel[5][5] =
 typedef struct
 {
     x264_pixel_cmp_t  sad[7];
-    x264_pixel_cmp_t  ssd[7];
+    x264_pixel_cmp_weight_t ssd[7];
+    x264_pixel_cmp_weight_t nssd[7];
     x264_pixel_cmp_t satd[7];
     x264_pixel_cmp_t ssim[7];
     x264_pixel_cmp_t sa8d[4];
+    x264_pixel_cmp_weight_t rdcmp[7]; /* either ssd or nsse for mode decision */
     x264_pixel_cmp_t mbcmp[7]; /* either satd or sad for subpel refine and mode decision */
     x264_pixel_cmp_t mbcmp_unaligned[7]; /* unaligned mbcmp for subpel */
     x264_pixel_cmp_t fpelcmp[7]; /* either satd or sad for fullpel motion search */
