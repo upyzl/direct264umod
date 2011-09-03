@@ -53,7 +53,11 @@ void x264_register_vid_filters( void )
     REGISTER_VFILTER( select_every );
     REGISTER_VFILTER( depth );
     REGISTER_VFILTER( subtitle );
+    REGISTER_VFILTER( hqdn3d );
+    REGISTER_VFILTER( pad );
+    REGISTER_VFILTER( vflip );
 #if HAVE_GPL
+    REGISTER_VFILTER( yadif );
 #endif
 }
 
