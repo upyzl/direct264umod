@@ -1,10 +1,13 @@
 /*****************************************************************************
- * mp4.c: mp4 muxer
+ * mp4.c: mp4 muxer using L-SMASH
  *****************************************************************************
  * Copyright (C) 2003-2011 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
+ *          Yusuke Nakamura <muken.the.vfrmaniac@gmail.com>
+ *          Takashi Hirata <silverfilain@gmail.com>
+ *          golgol7777 <golgol7777@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

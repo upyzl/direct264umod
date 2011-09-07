@@ -49,7 +49,6 @@ External library support:
   --disable-swscale        disable swscale support
   --disable-lavf           disable libavformat support
   --disable-ffms           disable ffmpegsource support
-  --disable-gpac           disable gpac support
 
 EOF
 exit 1
@@ -104,7 +103,6 @@ icl_ldflags() {
 
         arg=${arg/pthreadGC/pthreadVC}
         [ "$arg" = avifil32.lib ] && arg=vfw32.lib
-        [ "$arg" = gpac_static.lib ] && arg=libgpac_static.lib
 
         [ -n "$arg" ] && echo -n "$arg "
     done
@@ -226,7 +224,7 @@ static="no"
 avs="auto"
 lavf="auto"
 ffms="auto"
-gpac="internal"
+lsmash="internal"
 gpl="yes"
 thread="auto"
 swscale="auto"
@@ -251,7 +249,7 @@ cross_prefix=""
 EXE=""
 
 # list of all preprocessor HAVE values we can define
-CONFIG_HAVE="MALLOC_H ALTIVEC ALTIVEC_H MMX ARMV6 ARMV6T2 NEON BEOSTHREAD POSIXTHREAD WIN32THREAD THREAD LOG2F VISUALIZE SWSCALE LAVF FFMS GPAC GF_MALLOC AVS GPL VECTOREXT INTERLACED CPU_COUNT"
+CONFIG_HAVE="MALLOC_H ALTIVEC ALTIVEC_H MMX ARMV6 ARMV6T2 NEON BEOSTHREAD POSIXTHREAD WIN32THREAD THREAD LOG2F VISUALIZE SWSCALE LAVF FFMS LSMASH AVS GPL VECTOREXT INTERLACED CPU_COUNT"
 
 # parse options
 
@@ -302,9 +300,6 @@ for opt do
             ;;
         --disable-ffms)
             ffms="no"
-            ;;
-        --disable-gpac)
-            gpac="no"
             ;;
         --disable-gpl)
             gpl="no"
@@ -833,31 +828,6 @@ if [ "$swscale" = "yes" ]; then
     fi
 fi
 
-if [ $SYS = WINDOWS ]; then
-    GPAC_LIBS="-lwinmm"
-fi
-if [ "$gpac" = "auto" ] ; then
-    gpac="no"
-    cc_check "" -lz && GPAC_LIBS="-lgpac_static -lz" || GPAC_LIBS="-lgpac_static"
-    if [ "$SYS" = "WINDOWS" ] ; then
-        GPAC_LIBS="$GPAC_LIBS -lwinmm"
-    fi
-    if cc_check gpac/isomedia.h "$GPAC_LIBS" ; then
-        if cc_check gpac/isomedia.h "$GPAC_LIBS" "gf_isom_set_pixel_aspect_ratio(0,0,0,0,0);" ; then
-            gpac="yes"
-        else
-            echo "Warning: gpac is too old, update to 2007-06-21 UTC or later"
-        fi
-    fi
-fi
-if [ "$gpac" != "no" ] ; then
-    define HAVE_GPAC
-    if cc_check gpac/isomedia.h "-Werror $GPAC_LIBS" "gf_malloc(1); gf_free(NULL);" ; then
-        define HAVE_GF_MALLOC
-    fi
-    LDFLAGSCLI="$GPAC_LIBS $LDFLAGSCLI"
-fi
-
 if [ "$avs" = "auto" ] ; then
     avs="no"
     # cygwin can use avisynth if it can use LoadLibrary
@@ -1011,7 +981,7 @@ STRIP=$STRIP
 AS=$AS
 ASFLAGS=$ASFLAGS
 EXE=$EXE
-MP4=$gpac
+MP4=$lsmash
 HAVE_GETOPT_LONG=$HAVE_GETOPT_LONG
 DEVNULL=$DEVNULL
 PROF_GEN_CC=$PROF_GEN_CC
@@ -1116,7 +1086,7 @@ interlaced: $interlaced
 avs:        $avs
 lavf:       $lavf
 ffms:       $ffms
-gpac:       $gpac
+lsmash:     $lsmash
 gpl:        $gpl
 thread:     $thread
 filters:    $filters
