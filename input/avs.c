@@ -190,17 +190,17 @@ static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, c
     if( (opt->output_csp == X264_CSP_I420 && !avs_is_yv12( vi )) || (opt->output_csp == X264_CSP_I444 && !avs_is_yv24( vi )) ||
         (opt->output_csp == X264_CSP_RGB && !avs_is_rgb( vi )) )
     {
-        FAIL_IF_ERROR( avs_version < 2.6f && opt->output_csp == X264_CSP_I444, "avisynth >= 2.6 is required for i444 output\n" )
-
+        AVS_Value arg_arr[2], res2;
         const char *csp = opt->output_csp == X264_CSP_I420 ? "YV12" : (opt->output_csp == X264_CSP_I444 ? "YV24" : "RGB");
+        const char *arg_name[2] = { NULL, "interlaced" };
+        char conv_func[14] = { "ConvertTo" };
+        FAIL_IF_ERROR( avs_version < 2.6f && opt->output_csp == X264_CSP_I444, "avisynth >= 2.6 is required for i444 output\n" )
         x264_cli_log( "avs", X264_LOG_WARNING, "converting input clip to %s\n", csp );
         FAIL_IF_ERROR( opt->output_csp == X264_CSP_I420 && (vi->width&1 || vi->height&1),
                        "input clip width or height not divisible by 2 (%dx%d)\n", vi->width, vi->height )
-        const char *arg_name[2] = { NULL, "interlaced" };
-        AVS_Value arg_arr[2] = { res, avs_new_value_bool( info->interlaced ) };
-        char conv_func[14] = { "ConvertTo" };
+        arg_arr[0] = res; arg_arr[1]  = avs_new_value_bool( info->interlaced );
         strcat( conv_func, csp );
-        AVS_Value res2 = h->func.avs_invoke( h->env, conv_func, avs_new_value_array( arg_arr, 2 ), arg_name );
+        res2 = h->func.avs_invoke( h->env, conv_func, avs_new_value_array( arg_arr, 2 ), arg_name );
         FAIL_IF_ERROR( avs_is_error( res2 ), "couldn't convert input clip to %s\n", csp )
         res = update_clip( h, &vi, res2, res );
     }

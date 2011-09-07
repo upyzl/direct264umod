@@ -541,7 +541,7 @@ AVSC_INLINE int avs_as_int(AVS_Value v)
         { return v.d.integer; }   
 AVSC_INLINE const char * avs_as_string(AVS_Value v) 
         { return avs_is_error(v) || avs_is_string(v) ? v.d.string : 0; }
-AVSC_INLINE double avs_as_float(AVS_Value v) 
+AVSC_INLINE float avs_as_float(AVS_Value v) 
         { return avs_is_int(v) ? v.d.integer : v.d.floating_pt; }
 AVSC_INLINE const char * avs_as_error(AVS_Value v) 
         { return avs_is_error(v) ? v.d.string : 0; }
