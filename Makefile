@@ -21,9 +21,6 @@ SRCCLI = x264.c input/input.c input/timecode.c input/rawinput.c input/y4m.c \
          filters/video/select_every.c filters/video/crop.c filters/video/depth.c \
          filters/video/hqdn3d.c filters/video/pad.c filters/video/vflip.c
 
-SRCCLI += output/mp4.c
-SRCCLI += $(addprefix output/mp4/, isom.c utils.c mp4sys.c mp4a.c summary.c importer.c)
-
 SRCSO =
 
 CONFIG := $(shell cat config.h)
@@ -40,7 +37,7 @@ endif
 
 # Optional module sources
 ifneq ($(findstring HAVE_AVS 1, $(CONFIG)),)
-SRCCLI += input/avs.c input/dshow.c input/deldup.c filters/video/subtitle.c
+SRCCLI += input/avs.c input/dshow.c  input/deldup.c filters/video/subtitle.c
 endif
 
 ifneq ($(findstring HAVE_THREAD 1, $(CONFIG)),)
@@ -60,6 +57,23 @@ ifneq ($(findstring HAVE_FFMS 1, $(CONFIG)),)
 SRCCLI += input/ffms.c
 endif
 
+ifneq ($(findstring HAVE_GPAC 1, $(CONFIG)),)
+SRCCLI += output/mp4.c
+endif
+
+# GPAC sources
+ifeq ($(MP4),internal)
+SRCCLI += GPAC/avc_ext.c GPAC/bitstream.c GPAC/box_code_3gpp.c GPAC/box_code_apple.c \
+          GPAC/box_code_base.c GPAC/box_code_isma.c GPAC/box_code_meta.c GPAC/box_funcs.c \
+          GPAC/data_map.c GPAC/descriptors.c GPAC/desc_private.c GPAC/error.c GPAC/hinting.c \
+          GPAC/hint_track.c GPAC/ipmpx_code.c GPAC/ipmpx_dump.c GPAC/ipmpx_parse.c \
+          GPAC/isma_sample.c GPAC/isom_intern.c GPAC/isom_read.c GPAC/isom_store.c \
+          GPAC/isom_write.c GPAC/list.c GPAC/media.c GPAC/media_odf.c GPAC/meta.c \
+          GPAC/movie_fragments.c GPAC/oci_codec.c GPAC/odf_code.c GPAC/odf_codec.c \
+          GPAC/odf_command.c GPAC/odf_dump.c GPAC/odf_parse.c GPAC/os_divers.c GPAC/qos.c \
+          GPAC/sample_descs.c GPAC/slc.c GPAC/stbl_read.c GPAC/stbl_write.c GPAC/token.c \
+          GPAC/track.c GPAC/tx3g.c GPAC/url.c GPAC/utf.c
+endif
 # Visualization sources
 ifneq ($(findstring HAVE_VISUALIZE 1, $(CONFIG)),)
 SRCS   += common/visualize.c common/display-x11.c
@@ -223,7 +237,7 @@ use:
 	rm -f $(SRC2:%.c=%.gcda) $(SRC2:%.c=%.gcno) *.dyn pgopti.dpi pgopti.dpi.lock
 
 clean:
-	rm -f $(OBJS) $(OBJASM) $(OBJCLI) $(OBJSO) $(SONAME) *.a *.lib *.exp *.pdb x264 x264.exe .depend TAGS
+	rm -f $(OBJS) $(OBJASM) $(OBJCLI) $(OBJSO) $(SONAME) libx264.a *.lib *.exp *.pdb x264 x264.exe .depend TAGS
 	rm -f checkasm checkasm.exe tools/checkasm.o tools/checkasm-a.o
 	rm -f $(SRC2:%.c=%.gcda) $(SRC2:%.c=%.gcno) *.dyn pgopti.dpi pgopti.dpi.lock
 

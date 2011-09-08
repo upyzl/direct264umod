@@ -52,7 +52,9 @@ void x264_register_vid_filters( void )
     REGISTER_VFILTER( resize );
     REGISTER_VFILTER( select_every );
     REGISTER_VFILTER( depth );
+#if HAVE_AVS
     REGISTER_VFILTER( subtitle );
+#endif
     REGISTER_VFILTER( hqdn3d );
     REGISTER_VFILTER( pad );
     REGISTER_VFILTER( vflip );
