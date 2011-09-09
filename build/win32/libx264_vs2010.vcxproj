@@ -1,0 +1,455 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>libx264</ProjectName>
+    <ProjectGuid>{A8D6E4CD-1885-4B03-8E41-5F3DB825BAA6}</ProjectGuid>
+    <RootNamespace>libx264</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\bin\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+    <RunCodeAnalysis Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</RunCodeAnalysis>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\bin\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>../../common;../../extras;../..;../../pthreads;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;_LIB;WIN32;__X264__;HAVE_MMX=1;__SSE__;ARCH_X86=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_THREAD=1;HAVE_WIN32THREAD=1;HAVE_INTERLACED=1;PTW32_STATIC_LIB=0;HAVE_GPL=1;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeaderOutputFile>.\Release/libx264.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <EnablePREfast>false</EnablePREfast>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0804</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\bin/libx264.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../../common;../../extras;../..;../../pthreads;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_LIB;WIN32;__X264__;HAVE_MMX=1;__SSE__;ARCH_X86=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_THREAD=1;HAVE_WIN32THREAD=1;HAVE_INTERLACED=1;PTW32_STATIC_LIB=0;HAVE_GPL=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <PrecompiledHeaderOutputFile>.\Debug/libx264.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0804</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\bin/libx264.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\common\bitstream.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\osdep.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\threadpool.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\win32thread.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\analyse.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\cabac.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\cavlc.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\encoder.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\lookahead.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\macroblock.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\me.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\ratecontrol.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\rectangle.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\encoder\set.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/enc_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/enc_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/enc_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/enc_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\cabac.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\common.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\cpu.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\dct.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\deblock.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\frame.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\macroblock.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\x86\mc-c.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\mc.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\mvpred.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\pixel.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\x86\predict-c.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\predict.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\quant.c">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Full</Optimization>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\set.c">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Full</Optimization>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\common\vlc.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\obj/core_release/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj/core_release/</ProgramDataBaseFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\obj/core_debug/</ObjectFileName>
+      <ProgramDataBaseFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj/core_debug/</ProgramDataBaseFileName>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\common\bitstream.h" />
+    <ClInclude Include="..\..\common\threadpool.h" />
+    <ClInclude Include="..\..\common\win32thread.h" />
+    <ClInclude Include="..\..\encoder\analyse.h" />
+    <ClInclude Include="..\..\encoder\macroblock.h" />
+    <ClInclude Include="..\..\encoder\me.h" />
+    <ClInclude Include="..\..\encoder\ratecontrol.h" />
+    <ClInclude Include="..\..\common\rectangle.h" />
+    <ClInclude Include="..\..\encoder\set.h" />
+    <ClInclude Include="..\..\common\cabac.h" />
+    <ClInclude Include="..\..\common\common.h" />
+    <ClInclude Include="..\..\common\cpu.h" />
+    <ClInclude Include="..\..\common\dct.h" />
+    <ClInclude Include="..\..\common\frame.h" />
+    <ClInclude Include="..\..\common\macroblock.h" />
+    <ClInclude Include="..\..\common\mc.h" />
+    <ClInclude Include="..\..\common\osdep.h" />
+    <ClInclude Include="..\..\common\pixel.h" />
+    <ClInclude Include="..\..\common\predict.h" />
+    <ClInclude Include="..\..\common\quant.h" />
+    <ClInclude Include="..\..\common\set.h" />
+    <ClInclude Include="..\..\common\x86\util.h" />
+    <ClInclude Include="..\..\common\vlc.h" />
+    <ClInclude Include="..\..\extras\getopt.h" />
+    <ClInclude Include="..\..\extras\inttypes.h" />
+    <ClInclude Include="..\..\extras\stdint.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\common\x86\cabac-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\const-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\cpu-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\dct-32.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\dct-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\deblock-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\mc-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\mc-a2.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\pixel-32.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\pixel-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\predict-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\quant-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\common\x86\sad-a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\common\x86\bitstream-a.asm">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembly %(FullPath)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

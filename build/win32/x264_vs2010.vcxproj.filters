@@ -1,0 +1,259 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="GPAC">
+      <UniqueIdentifier>{54a4cfa6-bbdf-4d07-bb4c-16789e4934ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{bec9e011-e39d-440f-af97-7475b8b846c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Output">
+      <UniqueIdentifier>{26a58c9c-894c-4081-9f49-f4e3ee206095}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Filters">
+      <UniqueIdentifier>{131c3ff3-c04c-47ce-abc4-0243012d920c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\GPAC\avc_ext.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\bitstream.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\box_code_3gpp.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\box_code_apple.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\box_code_base.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\box_code_isma.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\box_code_meta.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\box_funcs.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\data_map.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\desc_private.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\descriptors.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\error.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\hint_track.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\hinting.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\ipmpx_code.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\ipmpx_dump.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\ipmpx_parse.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\isma_sample.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\isom_intern.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\isom_read.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\isom_store.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\isom_write.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\list.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\media.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\media_odf.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\meta.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\movie_fragments.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\oci_codec.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\odf_code.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\odf_codec.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\odf_command.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\odf_dump.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\odf_parse.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\os_divers.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\qos.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\sample_descs.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\slc.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\stbl_read.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\stbl_write.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\token.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\track.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\tx3g.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\url.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GPAC\utf.c">
+      <Filter>GPAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\avs.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\deldup.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\dshow.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\lavf.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\thread.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\timecode.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\y4m.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\avi.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\flv.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\flv_bytestream.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\matroska.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\matroska_ebml.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\mp4.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\output\raw.c">
+      <Filter>Output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\extras\getopt.c" />
+    <ClCompile Include="..\..\x264.c" />
+    <ClCompile Include="..\..\input\input.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\filters.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\cache.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\crop.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\fix_vfr_pts.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\internal.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\resize.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\select_every.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\source.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\video.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\input\rawinput.c">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\depth.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\video\subtitle.c">
+      <Filter>Filters</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\input\input.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\output\flv_bytestream.h">
+      <Filter>Output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\output\matroska_ebml.h">
+      <Filter>Output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\output\output.h">
+      <Filter>Output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\x264.h" />
+    <ClInclude Include="..\..\x264cli.h" />
+    <ClInclude Include="..\..\filters\filters.h">
+      <Filter>Filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\filters\video\video.h">
+      <Filter>Filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\filters\video\internal.h">
+      <Filter>Filters</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
