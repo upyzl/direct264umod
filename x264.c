@@ -127,7 +127,9 @@ static const char * const muxer_names[] =
     "mkv",
     "flv",
     "avi",
+#if HAVE_GPAC
     "mp4",
+#endif
     0
 };
 
@@ -456,10 +458,7 @@ static void help( x264_param_t *defaults, int longhelp )
         " .mkv -> Matroska\n"
         " .flv -> Flash Video\n"
         " .avi -> MS AVI\n"
-        " .mp4 -> MP4 (L-SMASH)\n"
-        " .3gp -> MP4 (branded '3gp6')\n"
-        " .3g2 -> MP4 (branded '3gp6' and '3g2a')\n"
-        " .mov or .qt -> QuickTime File Format\n"
+        " .mp4 -> MP4 if compiled with GPAC support (%s)\n"
         "Output bit depth: %d (configured at compile time)\n"
         "\n"
         "Options:\n"
@@ -480,6 +479,11 @@ static void help( x264_param_t *defaults, int longhelp )
         "no",
 #endif
 #if HAVE_FFMS
+        "yes",
+#else
+        "no",
+#endif
+#if HAVE_GPAC
         "yes",
 #else
         "no",
@@ -1138,9 +1142,9 @@ static int select_output( const char *muxer, char *filename, x264_param_t *param
     if( !strcmp( filename, "-" ) || strcasecmp( muxer, "auto" ) )
         ext = muxer;
 
-    if( !strcasecmp( ext, "mp4" ) || !strcasecmp( ext, "3gp" ) || !strcasecmp( ext, "3g2" ) ||
-        !strcasecmp( ext, "mov" ) || !strcasecmp( ext, "qt" ) )
+    if( !strcasecmp( ext, "mp4" ) )
     {
+#if HAVE_GPAC
         cli_output = mp4_output;
         param->b_annexb = 0;
         param->b_repeat_headers = 0;
@@ -1149,6 +1153,10 @@ static int select_output( const char *muxer, char *filename, x264_param_t *param
             x264_cli_log( "x264", X264_LOG_WARNING, "cbr nal-hrd is not compatible with mp4\n" );
             param->i_nal_hrd = X264_NAL_HRD_VBR;
         }
+#else
+        x264_cli_log( "x264", X264_LOG_ERROR, "not compiled with MP4 output support\n" );
+        return -1;
+#endif
     }
     else if( !strcasecmp( ext, "mkv" ) )
     {
