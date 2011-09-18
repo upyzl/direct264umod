@@ -163,7 +163,7 @@ void x264_param_default( x264_param_t *param )
     memset( param->cqm_8ic, 16, sizeof( param->cqm_8ic ) );
     memset( param->cqm_8pc, 16, sizeof( param->cqm_8pc ) );
 
-    param->b_version_info = 0;
+    param->i_sei_opts = 0;
     param->b_timed_scenecut = 0;
     param->b_repeat_headers = 1;
     param->b_annexb = 1;
@@ -1028,7 +1028,9 @@ int x264_param_parse( x264_param_t *p, const char *name, const char *value )
     OPT("frame-packing")
         p->i_frame_packing = atoi(value);
     OPT("versioninfo")
-        p->b_version_info = atobool(value);
+        p->i_sei_opts = atobool(value)? 2 : 0;
+    OPT("sei-opts")
+        p->i_sei_opts = atoi(value);
     OPT("timed-scenecut")
         p->b_timed_scenecut = atobool(value);
     else
@@ -1311,7 +1313,7 @@ char *x264_param2string( x264_param_t *p, int b_res )
     if( !buf )
         return NULL;
 
-    if( !p->b_version_info && !p->rc.b_stat_read && !p->rc.b_stat_write )
+    if( !p->i_sei_opts && !p->rc.b_stat_read && !p->rc.b_stat_write )
     {
         buf[0] = 0;
         return buf;

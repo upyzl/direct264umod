@@ -300,7 +300,7 @@ typedef struct x264_param_t
     int         i_bframe_pyramid;   /* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
     int         b_open_gop;
     int         b_bluray_compat;
-    int         b_version_info;     /* Write version infomation into bitstream */
+    int         i_sei_opts;         /* Write version information and options into SEI */
     int         b_timed_scenecut;   /* Use PTS based scenecut threshold increment instead of frame count */
 
     int         b_deblocking_filter;
