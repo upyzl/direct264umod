@@ -1478,12 +1478,15 @@ int x264_encoder_headers( x264_t *h, x264_nal_t **pp_nal, int *pi_nal )
     if( x264_nal_end( h ) )
         return -1;
 
-    /* identify ourselves */
-    x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
-    if( x264_sei_version_write( h, &h->out.bs ) )
-        return -1;
-    if( x264_nal_end( h ) )
-        return -1;
+    if( h->param.i_sei_opts )
+    {
+        /* identify ourselves */
+        x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
+        if( x264_sei_version_write( h, &h->out.bs ) )
+            return -1;
+        if( x264_nal_end( h ) )
+            return -1;
+    }
 
     frame_size = x264_encoder_encapsulate_nals( h, 0 );
     if( frame_size < 0 )
@@ -2885,7 +2888,7 @@ int     x264_encoder_encode( x264_t *h,
 
     if( h->fenc->b_keyframe )
     {
-        if( h->param.b_repeat_headers && h->fenc->i_frame == 0 && h->param.b_version_info )
+        if( h->param.b_repeat_headers && h->fenc->i_frame == 0 && h->param.i_sei_opts )
         {
             /* identify ourself */
             x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );

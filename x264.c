@@ -810,7 +810,11 @@ static void help( x264_param_t *defaults, int longhelp )
     H0( "     --starttime <hh:mm:ss.ssss>  Start encoding at specified position\n" );
     H0( "     --endtime   <hh:mm:ss.ssss>  Stop encoding at specified position\n" );
 #endif
-    H1( "     --versioninfo          Write version information in stream header\n" );
+    H1( "     --sei-opts <int>       Write information in SEI [0]\n" );
+    H1( "                               - 0: Disabled\n" );
+    H1( "                               - 1: Version only\n" );
+    H1( "                               - 2: Version + options\n" );
+    H2( "     --versioninfo          Obsolete, identical to --sei-opts 2\n" );
     H2( "     --aud                  Use access unit delimiters\n" );
     H2( "     --force-cfr            Force constant framerate timestamp generation\n" );
     H2( "     --tcfile-in <string>   Force timestamp generation with timecode file\n" );
@@ -1020,6 +1024,7 @@ static struct option long_options[] =
     { "starttime", required_argument, NULL, OPT_ST},
     { "endtime", required_argument, NULL, OPT_ET},
 #endif
+    { "sei-opts", required_argument, NULL, 0 },
     { "versioninfo", no_argument, NULL, 0 },
     { "transfer",    required_argument, NULL, 0 },
     { "colormatrix", required_argument, NULL, 0 },
