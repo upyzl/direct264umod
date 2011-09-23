@@ -35,6 +35,7 @@
 #include "input/input.h"
 #include "output/output.h"
 #include "filters/filters.h"
+#include <time.h>
 
 #define FAIL_IF_ERROR( cond, ... ) FAIL_IF_ERR( cond, "x264", __VA_ARGS__ )
 
@@ -205,7 +206,6 @@ void x264_cli_log( const char *name, int i_level, const char *fmt, ... )
     va_list arg;
     if( psz_log_file && *psz_log_file && i_level <= cli_log_file_level )
     {
-        va_list arg;
         va_start( arg, fmt );
         x264_cli_log_file( psz_log_file, i_level, fmt, arg );
         va_end( arg );
@@ -272,7 +272,6 @@ void x264_cli_printf( int i_level, const char *fmt, ... )
     va_list arg;
     if( psz_log_file && *psz_log_file )
     {
-        va_list arg;
         va_start( arg, fmt );
         x264_cli_log_file( psz_log_file, X264_LOG_INFO, fmt, arg );
         va_end( arg );

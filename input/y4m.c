@@ -191,7 +191,7 @@ static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, c
     {
         uint64_t i_size;
 #ifdef _WIN32
-        *(uint32_t*)&i_size = GetFileSize((HANDLE)_get_osfhandle(_fileno(h->fh)), ((uint32_t*)&i_size)+1);
+        *(uint32_t*)&i_size = GetFileSize((HANDLE)_get_osfhandle(_fileno(h->fh)), ((PDWORD*)&i_size)+1);
 #else
         uint64_t init_pos = ftell( h->fh );
         fseek( h->fh, 0, SEEK_END );
