@@ -488,7 +488,7 @@ case $host_cpu in
         ASFLAGS="$ASFLAGS -O2"
         if [ $compiler = GNU ]; then
             if [[ "$asm" == auto && "$CFLAGS" != *-march* ]]; then
-                CFLAGS="$CFLAGS -march=i686"
+                CFLAGS="$CFLAGS -march=i686 -mtune=core2"
             fi
             if [[ "$asm" == auto && "$CFLAGS" != *-mfpmath* ]]; then
                 CFLAGS="$CFLAGS -mfpmath=sse -msse"
@@ -892,7 +892,7 @@ elif [ $ARCH = ARM ]; then
     # and it doesn't save any speed anyway on 4.4, so disable it
     CFLAGS="-O3 -fno-fast-math $CFLAGS"
 else
-    CFLAGS="-Ofast -ffast-math $CFLAGS"
+    CFLAGS="-Ofast $CFLAGS"
 fi
 
 if cc_check '' -fno-tree-vectorize ; then
