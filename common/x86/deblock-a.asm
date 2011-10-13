@@ -485,7 +485,6 @@ DEBLOCK_LUMA_64
 %endmacro
 
 %macro LUMA_INTRA_INIT 1
-    %xdefine pad %1*mmsize+((gprsize*3) % mmsize)-(stack_offset&15)
     %define t0 m4
     %define t1 m5
     %define t2 m6
@@ -495,6 +494,13 @@ DEBLOCK_LUMA_64
     CAT_XDEFINE t, i, [rsp+mmsize*(i-4)]
     %assign i i+1
 %endrep
+%if NON_MOD16_STACK && mmsize > 8
+    %xdefine pad %1*mmsize-(stack_offset&15)
+    movd   mm0, rsp
+    and    rsp, -16
+%else
+    %xdefine pad %1*mmsize+((gprsize*3) % mmsize)-(stack_offset&15)
+%endif
     SUB    rsp, pad
     add     r1, r1
 %endmacro
@@ -744,7 +750,11 @@ cglobal deblock_v_luma_intra, 4,7,8
     add     r4, mmsize
     dec     r6
     jg .loop
+%if NON_MOD16_STACK && mmsize > 8
+    movd   rsp, mm0
+%else
     ADD    rsp, pad
+%endif
     RET
 
 ;-----------------------------------------------------------------------------
@@ -785,7 +795,11 @@ cglobal deblock_h_luma_intra, 4,7,8
     dec     r6
 %endif
     jg .loop
+%if NON_MOD16_STACK && mmsize > 8
+    movd   rsp, mm0
+%else
     ADD    rsp, pad
+%endif
     RET
 %endmacro
 
@@ -794,10 +808,14 @@ INIT_MMX mmx2
 DEBLOCK_LUMA
 DEBLOCK_LUMA_INTRA
 INIT_XMM sse2
+%if NON_MOD16_STACK != 1
 DEBLOCK_LUMA
+%endif
 DEBLOCK_LUMA_INTRA
 INIT_XMM avx
+%if NON_MOD16_STACK != 1
 DEBLOCK_LUMA
+%endif
 DEBLOCK_LUMA_INTRA
 %endif
 %endif ; HIGH_BIT_DEPTH
@@ -1314,10 +1332,12 @@ cglobal deblock_h_luma, 0,5
 
 INIT_MMX mmx2
 DEBLOCK_LUMA v8, 8
+%if NON_MOD16_STACK != 1
 INIT_XMM sse2
 DEBLOCK_LUMA v, 16
 INIT_XMM avx
 DEBLOCK_LUMA v, 16
+%endif
 
 %endif ; ARCH
 
@@ -1549,7 +1569,13 @@ cglobal deblock_h_luma_intra, 2,4
     lea    r3,  [r1*3]
     sub    r0,  4
     lea    r2,  [r0+r3]
+%if NON_MOD16_STACK && mmsize > 8
+%assign pad 0x80-(stack_offset&15)
+    movd   mm0, rsp
+    and    rsp, -16
+%else
 %assign pad 0x8c-(stack_offset&15)
+%endif
     SUB    rsp, pad
     %define pix_tmp rsp
 
@@ -1581,17 +1607,19 @@ cglobal deblock_h_luma_intra, 2,4
     lea    r0,  [r0+r1*8]
     lea    r2,  [r2+r1*8]
     TRANSPOSE8x8_MEM  PASS8ROWS(pix_tmp+8, pix_tmp+0x38, 0x10, 0x30), PASS8ROWS(r0, r2, r1, r3)
+%if NON_MOD16_STACK && mmsize > 8
+    movd   rsp, mm0
+%else
     ADD    rsp, pad
+%endif
     RET
 %endif ; ARCH_X86_64
 %endmacro ; DEBLOCK_LUMA_INTRA
 
-%ifndef NON_MOD16_STACK
 INIT_XMM sse2
 DEBLOCK_LUMA_INTRA v
 INIT_XMM avx
 DEBLOCK_LUMA_INTRA v
-%endif
 %ifndef ARCH_X86_64
 INIT_MMX mmx2
 DEBLOCK_LUMA_INTRA v8

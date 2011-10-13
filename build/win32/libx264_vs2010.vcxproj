@@ -327,7 +327,6 @@
     <ClInclude Include="..\..\common\quant.h" />
     <ClInclude Include="..\..\common\set.h" />
     <ClInclude Include="..\..\common\x86\util.h" />
-    <ClInclude Include="..\..\common\vlc.h" />
     <ClInclude Include="..\..\extras\getopt.h" />
     <ClInclude Include="..\..\extras\inttypes.h" />
     <ClInclude Include="..\..\extras\stdint.h" />
@@ -338,7 +337,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\const-a.asm">
@@ -346,7 +345,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\cpu-a.asm">
@@ -354,7 +353,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\dct-32.asm">
@@ -362,7 +361,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\dct-a.asm">
@@ -370,7 +369,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\deblock-a.asm">
@@ -378,7 +377,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\mc-a.asm">
@@ -386,7 +385,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\mc-a2.asm">
@@ -394,7 +393,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\pixel-32.asm">
@@ -402,7 +401,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\pixel-a.asm">
@@ -410,7 +409,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\predict-a.asm">
@@ -418,7 +417,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\quant-a.asm">
@@ -426,7 +425,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="..\..\common\x86\sad-a.asm">
@@ -434,14 +433,14 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\common\x86\bitstream-a.asm">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK=1 -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembly %(FullPath)</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">yasm -I..\..\common\x86\ -f win32 -O2 -DPREFIX -DNON_MOD16_STACK -DBIT_DEPTH=8 -o "$(IntDir)%(Filename)".obj "%(FullPath)"</Command>

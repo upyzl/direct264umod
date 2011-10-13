@@ -180,9 +180,6 @@
     <ClInclude Include="..\..\common\x86\util.h">
       <Filter>Core\core_h</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\vlc.h">
-      <Filter>Core\core_h</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\extras\getopt.h">
       <Filter>extras\extras_h</Filter>
     </ClInclude>

@@ -433,7 +433,6 @@ static int __stdcall CallBackProc(PBYTE pData, int32_t iLen, int64_t i64TimeStam
 
 static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, cli_input_opt_t *opt )
 {
-	uint32_t dwAudioInfo;
 	dshow_video_info_t VideoInfo;
 	TInitDShowGraphFromFile InitDShowGraphFromFile=NULL;
 	HMODULE hDump = 0, hPhase = 0;
@@ -453,7 +452,7 @@ static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, c
 	SeekGraph = (TSeekGraph)GetProcAddress(hDump,"SeekGraph");
 	GetGraphDuration = (TGraphOperate)GetProcAddress(hDump,"GetGraphDuration");
 
-	if (!(g_pdgi = InitDShowGraphFromFile(psz_filename,b_nv12?MEDIASUBTYPE_NV12:MEDIASUBTYPE_YV12,0,-1,CallBackProc,NULL,&VideoInfo,&dwAudioInfo)))
+	if (!(g_pdgi = InitDShowGraphFromFile(psz_filename,b_nv12?MEDIASUBTYPE_NV12:MEDIASUBTYPE_YV12,0,-1,CallBackProc,NULL,&VideoInfo,0)))
 	{
 		if (VideoInfo.reserved != 7)
 		{
@@ -463,7 +462,7 @@ static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, c
 		else
 		{
 			b_nv12 = !b_nv12;
-			if (!(g_pdgi = InitDShowGraphFromFile(psz_filename,b_nv12?MEDIASUBTYPE_NV12:MEDIASUBTYPE_YV12,0,-1,CallBackProc,NULL,&VideoInfo,&dwAudioInfo)))
+			if (!(g_pdgi = InitDShowGraphFromFile(psz_filename,b_nv12?MEDIASUBTYPE_NV12:MEDIASUBTYPE_YV12,0,-1,CallBackProc,NULL,&VideoInfo,0)))
 			{
 				x264_cli_log("dshow", X264_LOG_ERROR, "failed to render %s\nerror code = %u\n",psz_filename,VideoInfo.reserved);
 				return -1;
