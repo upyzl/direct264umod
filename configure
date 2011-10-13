@@ -488,7 +488,7 @@ case $host_cpu in
         ASFLAGS="$ASFLAGS -O2"
         if [ $compiler = GNU ]; then
             if [[ "$asm" == auto && "$CFLAGS" != *-march* ]]; then
-                CFLAGS="$CFLAGS -march=i686 -mtune=core2"
+                CFLAGS="$CFLAGS -march=i686"
             fi
             if [[ "$asm" == auto && "$CFLAGS" != *-mfpmath* ]]; then
                 CFLAGS="$CFLAGS -mfpmath=sse -msse"

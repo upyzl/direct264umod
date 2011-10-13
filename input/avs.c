@@ -188,16 +188,23 @@ static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, c
 #if !HAVE_SWSCALE
     /* if swscale is not available, convert the CSP if necessary */
     if( (opt->output_csp == X264_CSP_I420 && !avs_is_yv12( vi )) || (opt->output_csp == X264_CSP_I444 && !avs_is_yv24( vi )) ||
-        (opt->output_csp == X264_CSP_RGB && !avs_is_rgb( vi )) )
+        (opt->output_csp == X264_CSP_I444 && !avs_is_yv24( vi )) || (opt->output_csp == X264_CSP_RGB && !avs_is_rgb( vi )) )
     {
         AVS_Value arg_arr[2], res2;
-        const char *csp = opt->output_csp == X264_CSP_I420 ? "YV12" : (opt->output_csp == X264_CSP_I444 ? "YV24" : "RGB");
+        const char *csp = opt->output_csp == X264_CSP_I420 ? "YV12" :
+                          opt->output_csp == X264_CSP_I422 ? "YV16" :
+                          opt->output_csp == X264_CSP_I444 ? "YV24" : "RGB";
         const char *arg_name[2] = { NULL, "interlaced" };
         char conv_func[14] = { "ConvertTo" };
-        FAIL_IF_ERROR( avs_version < 2.6f && opt->output_csp == X264_CSP_I444, "avisynth >= 2.6 is required for i444 output\n" )
+        FAIL_IF_ERROR( avs_version < 2.6f && (opt->output_csp == X264_CSP_I422 || opt->output_csp == X264_CSP_I444),
+                       "avisynth >= 2.6 is required for i422/i444 output\n" )
         x264_cli_log( "avs", X264_LOG_WARNING, "converting input clip to %s\n", csp );
-        FAIL_IF_ERROR( opt->output_csp == X264_CSP_I420 && (vi->width&1 || vi->height&1),
-                       "input clip width or height not divisible by 2 (%dx%d)\n", vi->width, vi->height )
+        FAIL_IF_ERROR( opt->output_csp < X264_CSP_I444 && (vi->width&1),
+                       "input clip width not divisible by 2 (%dx%d)\n", vi->width, vi->height )
+        FAIL_IF_ERROR( opt->output_csp == X264_CSP_I420 && info->interlaced && (vi->height&3),
+                       "input clip height not divisible by 4 (%dx%d)\n", vi->width, vi->height )
+        FAIL_IF_ERROR( (opt->output_csp == X264_CSP_I420 || info->interlaced) && (vi->height&1),
+                       "input clip height not divisible by 2 (%dx%d)\n", vi->width, vi->height )
         arg_arr[0] = res; arg_arr[1]  = avs_new_value_bool( info->interlaced );
         strcat( conv_func, csp );
         res2 = h->func.avs_invoke( h->env, conv_func, avs_new_value_array( arg_arr, 2 ), arg_name );
@@ -219,13 +226,13 @@ static int open_file( char *psz_filename, hnd_t *p_handle, video_info_t *info, c
         info->csp = X264_CSP_BGR | X264_CSP_VFLIP;
     else if( avs_is_yv24( vi ) )
         info->csp = X264_CSP_I444;
+    else if( avs_is_yv16( vi ) )
+        info->csp = X264_CSP_I422;
     else if( avs_is_yv12( vi ) )
         info->csp = X264_CSP_I420;
 #if HAVE_SWSCALE
     else if( avs_is_yuy2( vi ) )
         info->csp = PIX_FMT_YUYV422 | X264_CSP_OTHER;
-    else if( avs_is_yv16( vi ) )
-        info->csp = X264_CSP_I422;
     else if( avs_is_yv411( vi ) )
         info->csp = PIX_FMT_YUV411P | X264_CSP_OTHER;
     else if( avs_is_y8( vi ) )

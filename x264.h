@@ -43,7 +43,7 @@
 #include "x264_config.h"
 #endif
 
-#define X264_BUILD 116
+#define X264_BUILD 118
 
 /* x264_t:
  *      opaque handler for encoder */
@@ -186,12 +186,15 @@ static const char * const x264_log_level_names[] = { "none", "error", "warning",
 #define X264_CSP_I420           0x0001  /* yuv 4:2:0 planar */
 #define X264_CSP_YV12           0x0002  /* yvu 4:2:0 planar */
 #define X264_CSP_NV12           0x0003  /* yuv 4:2:0, with one y plane and one packed u+v */
-#define X264_CSP_I444           0x0004  /* yuv 4:4:4 planar */
-#define X264_CSP_YV24           0x0005  /* yvu 4:4:4 planar */
-#define X264_CSP_BGR            0x0006  /* packed bgr 24bits   */
-#define X264_CSP_BGRA           0x0007  /* packed bgr 32bits   */
-#define X264_CSP_RGB            0x0008  /* packed rgb 24bits   */
-#define X264_CSP_MAX            0x0009  /* end of list */
+#define X264_CSP_I422           0x0004  /* yuv 4:2:2 planar */
+#define X264_CSP_YV16           0x0005  /* yvu 4:2:2 planar */
+#define X264_CSP_NV16           0x0006  /* yuv 4:2:2, with one y plane and one packed u+v */
+#define X264_CSP_I444           0x0007  /* yuv 4:4:4 planar */
+#define X264_CSP_YV24           0x0008  /* yvu 4:4:4 planar */
+#define X264_CSP_BGR            0x0009  /* packed bgr 24bits   */
+#define X264_CSP_BGRA           0x000a  /* packed bgr 32bits   */
+#define X264_CSP_RGB            0x000b  /* packed rgb 24bits   */
+#define X264_CSP_MAX            0x000c  /* end of list */
 #define X264_CSP_VFLIP          0x1000  /* the csp is vertically flipped */
 #define X264_CSP_HIGH_DEPTH     0x2000  /* the csp has a depth of 16 bits per pixel component */
 #define X264_CSP_SKIP_DEPTH_FILTER 0x0100  /* HACK: totally skips depth filter to prevent dither error */
@@ -250,12 +253,13 @@ typedef struct x264_param_t
     int         i_threads;       /* encode multiple frames in parallel */
     int         b_sliced_threads;  /* Whether to use slice-based threading. */
     int         b_deterministic; /* whether to allow non-deterministic optimizations when threaded */
+    int         b_cpu_independent; /* force canonical behavior rather than cpu-dependent optimal algorithms */
     int         i_sync_lookahead; /* threaded lookahead buffer */
 
     /* Video Properties */
     int         i_width;
     int         i_height;
-    int         i_csp;  /* CSP of encoded bitstream, only i420 supported */
+    int         i_csp;         /* CSP of encoded bitstream */
     int         i_level_idc;
     int         b_level_force; /* force ref etc. for level */
     int         i_frame_total; /* number of frames to encode if known, else 0 */
@@ -559,6 +563,7 @@ int x264_param_parse( x264_param_t *, const char *name, const char *value );
  * 2) Custom user options (via param_parse or directly assigned variables)
  * 3) x264_param_apply_fastfirstpass
  * 4) x264_param_apply_profile
+ * 5) x264_param_apply_level
  *
  * Additionally, x264CLI does not apply step 3 if the preset chosen is "placebo"
  * or --slow-firstpass is set. */
@@ -599,7 +604,7 @@ void    x264_param_apply_fastfirstpass( x264_param_t * );
 /* x264_param_apply_profile:
  *      Applies the restrictions of the given profile.
  *      Currently available profiles are, from most to least restrictive: */
-static const char * const x264_profile_names[] = { "baseline", "main", "high", "high10", 0 };
+static const char * const x264_profile_names[] = { "baseline", "main", "high", "high10", "high422", "high444", 0 };
 
 /*      (can be NULL, in which case the function will do nothing)
  *
@@ -610,6 +615,26 @@ static const char * const x264_profile_names[] = { "baseline", "main", "high", "
  *
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
 int     x264_param_apply_profile( x264_param_t *, const char *profile );
+
+/* x264_param_apply_level:
+ *      Applies the restrictions of the level set in the passed x264_param_t to
+ *      the passed x264_param_t, using the passed profile.
+ *      Uses the level_idc values from x264_levels[].
+ *
+ *      Does nothing (but is considered success) if the level is set to
+ *      X264_LEVEL_IDC_AUTO (default).
+ *
+ *      x264_param_apply_level does not check or modify parameters related
+ *      to properties of the source video that may violate levels, e.g.
+ *      resolution, framerate, interlacing.  x264_param_apply_level is not
+ *      intended as a compatibility check; this is done inside x264 at the
+ *      start of encoding.
+ *
+ *      i_width and i_height must be initialized for x264_param_apply_level
+ *      to work properly.
+ *
+ *      returns 0 on success, negative on failure (e.g. invalid level). */
+int     x264_param_apply_level( x264_param_t *, const char *profile );
 
 /****************************************************************************
  * Picture structures and functions

@@ -92,9 +92,8 @@ static int set_param( hnd_t handle, x264_param_t *p_param )
     int start;
 
     flv_put_byte( c, FLV_TAG_TYPE_META ); // Tag Type "script data"
-    
-    start = c->d_cur;
 
+    start = c->d_cur;
     flv_put_be24( c, 0 ); // data length
     flv_put_be24( c, 0 ); // timestamp
     flv_put_be32( c, 0 ); // reserved

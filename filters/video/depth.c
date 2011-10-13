@@ -47,15 +47,17 @@ static int depth_filter_csp_is_supported( int csp )
     return csp_mask == X264_CSP_I420 ||
            csp_mask == X264_CSP_I422 ||
            csp_mask == X264_CSP_I444 ||
-           csp_mask == X264_CSP_YV24 ||
            csp_mask == X264_CSP_YV12 ||
-           csp_mask == X264_CSP_NV12;
+           csp_mask == X264_CSP_YV16 ||
+           csp_mask == X264_CSP_YV24 ||
+           csp_mask == X264_CSP_NV12 ||
+           csp_mask == X264_CSP_NV16;
 }
 
 static int csp_num_interleaved( int csp, int plane )
 {
     int csp_mask = csp & X264_CSP_MASK;
-    return ( csp_mask == X264_CSP_NV12 && plane == 1 ) ? 2 : 1;
+    return ( (csp_mask == X264_CSP_NV12 || csp_mask == X264_CSP_NV16) && plane == 1 ) ? 2 : 1;
 }
 
 /* The dithering algorithm is based on Sierra-2-4A error diffusion. It has been
@@ -79,11 +81,7 @@ static void dither_plane_##pitch( pixel *dst, int dst_stride, uint16_t *src, int
         { \
             err = err*2 + errors[x] + errors[x+1]; \
             dst[x*pitch] = x264_clip3( (((src[x*pitch]+half)<<2)+err)*pixel_max >> 18, 0, pixel_max ); \
-            errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift) - (dst[x*pitch] >> rshift); \
-            if( full_range ) \
-               errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift) - (dst[x*pitch] >> rshift); \
-            else \
-               errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift); \
+            errors[x] = err = src[x*pitch] - (dst[x*pitch] << lshift) - (full_range*dst[x*pitch] >> rshift); \
         } \
     } \
 }
@@ -126,7 +124,7 @@ static void scale_image( cli_image_t *output, cli_image_t *img, int full_range )
      * while also being fast. for n-bit we basically do the same thing, but we
      * discard the lower 16-n bits. */
     int csp_mask = img->csp & X264_CSP_MASK;
-     /* Decide the amount of shift needed by the type of color range */
+    /* Decide the amount of shift needed by the type of color range */
     const int shift = full_range ? 16 - BIT_DEPTH : BIT_DEPTH - 8;
     for( i = 0; i < img->planes; i++ )
     {
@@ -136,21 +134,24 @@ static void scale_image( cli_image_t *output, cli_image_t *img, int full_range )
         int height = x264_cli_csps[csp_mask].height[i] * img->height;
         int width = x264_cli_csps[csp_mask].width[i] * img->width;
 
-        for( j = 0; j < height; j++ )
-        {
-            for( k = 0; k < width; k++ )
-            {
-                if( full_range )
-                    /* x264's original algorithm */
-                    dst[k] = ((src[k] << 8) + src[k]) >> shift;
-                else
-                    /* Limited range algorithm mentioned in BT.709 */
-                    dst[k] = src[k] << shift;
-             }
+#define LOOP(math)                              \
+    do {                                        \
+        for( int j = 0; j < height; j++ )       \
+        {                                       \
+            for( int k = 0; k < width; k++ )    \
+                dst[k] = math;                  \
+            src += img->stride[i];              \
+            dst += output->stride[i]/2;         \
+        }                                       \
+    } while (0)
 
-            src += img->stride[i];
-            dst += output->stride[i]/2;
-        }
+        if( full_range )
+            /* x264's original algorithm */
+            LOOP( ((src[k] << 8) + src[k]) >> shift );
+        else
+            /* Limited range algorithm mentioned in BT.709, Part 2 */
+            LOOP( src[k] << shift );
+#undef LOOP
     }
 }
 
@@ -202,9 +203,7 @@ static int init( hnd_t *handle, cli_vid_filter_t *filter, video_info_t *info,
     int change_fmt = (info->csp ^ param->i_csp) & X264_CSP_HIGH_DEPTH;
     int csp = ~(~info->csp ^ change_fmt);
     int bit_depth = 8*x264_cli_csp_depth_factor( csp );
-    int full_range = info->full_range;
-    if( full_range != 1 )
-        full_range = 0;
+    int full_range = info->full_range == 1;
 
     if( opt_string )
     {

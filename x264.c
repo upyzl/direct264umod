@@ -35,7 +35,6 @@
 #include "input/input.h"
 #include "output/output.h"
 #include "filters/filters.h"
-#include <time.h>
 
 #define FAIL_IF_ERROR( cond, ... ) FAIL_IF_ERR( cond, "x264", __VA_ARGS__ )
 
@@ -136,7 +135,7 @@ static const char * const muxer_names[] =
 
 static const char * const pulldown_names[] = { "none", "22", "32", "64", "double", "triple", "euro", 0 };
 static const char * const log_level_names[] = { "none", "error", "warning", "info", "debug", 0 };
-static const char * const output_csp_names[] = { "i420", "i444", "rgb", 0 };
+static const char * const output_csp_names[] = { "i420", "i422", "i444", "rgb", 0 };
 
 typedef struct
 {
@@ -205,7 +204,7 @@ void x264_cli_log( const char *name, int i_level, const char *fmt, ... )
     char *s_level;
     va_list arg;
     if( psz_log_file && *psz_log_file && i_level <= cli_log_file_level )
-    {
+    {        
         va_start( arg, fmt );
         x264_cli_log_file( psz_log_file, i_level, fmt, arg );
         va_end( arg );
@@ -265,13 +264,13 @@ void x264_cli_log_file( char *p_file_name, int i_level, const char *psz_fmt, va_
         vfprintf( p_log_file, psz_fmt, arg );
         fclose( p_log_file );
     }
- }
+}
 
 void x264_cli_printf( int i_level, const char *fmt, ... )
 {
     va_list arg;
     if( psz_log_file && *psz_log_file )
-    {
+    {        
         va_start( arg, fmt );
         x264_cli_log_file( psz_log_file, X264_LOG_INFO, fmt, arg );
         va_end( arg );
@@ -403,14 +402,14 @@ static void print_csp_names( int longhelp )
 #endif
     if( longhelp < 2 )
         return;
-#   define INDENT "                                "
-    printf( "                              - valid csps for `raw' demuxer:\n" );
+#   define INDENT "                                 "
+    printf( "                               - valid csps for `raw' demuxer:\n" );
     printf( INDENT );
     for( i = X264_CSP_NONE+1; i < X264_CSP_CLI_MAX; i++ )
     {
         printf( "%s", x264_cli_csps[i].name );
         if( i+1 < X264_CSP_CLI_MAX )
-            printf( i&7? ", " : ",\n" );
+            printf( i&7? ", " : ",\n"INDENT );
     }
 #if HAVE_LAVF
     printf( "\n" );
@@ -511,7 +510,7 @@ static void help( x264_param_t *defaults, int longhelp )
     H0( "\n" );
     H0( "     --profile <string>     Force the limits of an H.264 profile\n"
         "                                Overrides all settings.\n" );
-    H2(
+    H2( 
 #if ( !(X264_BIT_DEPTH-8) )
         "                                - baseline:\n"
         "                                  --no-8x8dct --bframes 0 --no-cabac\n"
@@ -537,9 +536,9 @@ static void help( x264_param_t *defaults, int longhelp )
         "                                  Support for 4:2:0/4:2:2/4:4:4 chroma subsampling.\n" );
         else H0(
 #if ( !(X264_BIT_DEPTH-8) )
-        "                                  - baseline,main,high,high10,high422,high444\n"
+        "                                - baseline,main,high,high10,high422,high444\n"
 #else
-        "                                  - high10,high422,high444\n"
+        "                                - high10,high422,high444\n"
 #endif
                );
     H0( "     --preset <string>      Use a preset to select encoding settings [medium]\n"
@@ -706,7 +705,7 @@ static void help( x264_param_t *defaults, int longhelp )
     H1( "     --aq-strength <float>  Reduces blocking and blurring in flat and\n"
         "                            textured areas. [%.1f]\n", defaults->rc.f_aq_strength );
     H1( "     --fade-compensate <float> Allocate more bits to fades [%.1f]\n", defaults->rc.f_fade_compensate );
-    H2( "                                  Range: 0.0 - 1.0\n" );
+    H2( "                                Range: 0.0 - 1.0\n" );
     H1( "\n" );
     H0( " -p, --pass <int>           Enable multipass ratecontrol\n"
         "                               - 1: First pass, creates stats file\n"
@@ -774,7 +773,7 @@ static void help( x264_param_t *defaults, int longhelp )
                                      defaults->analyse.f_psy_rd, defaults->analyse.f_psy_trellis );
     H2( "     --no-psy               Disable all visual optimizations that worsen\n"
         "                            both PSNR and SSIM.\n" );
-    H1( "     --fgo <int>            Activates Film Grain Optimization. [%d]\n"
+    H1( "     --fgo <int>            Activates Film Grain Optimization. (0-50) [%d]\n"
         "                            Requires subme>=7\n"
         "                                - 5: weak FGO\n"
         "                                - 15: strong FGO\n", defaults->analyse.i_fgo );
@@ -866,11 +865,11 @@ static void help( x264_param_t *defaults, int longhelp )
     H0( "     --quiet                Quiet Mode\n" );
     H1( "     --log-level <string>   Specify the maximum level of logging [\"%s\"]\n"
         "                                - %s\n", strtable_lookup( x264_log_level_names, cli_log_level - X264_LOG_NONE ),
-                                      stringify_names( buf, x264_log_level_names ) );
-    H1( "     --log-file <string>     Save log to file\n" );
-    H1( "     --log-file-level <int>  Log-file level information [\"%s\"]\n"
+                                     stringify_names( buf, x264_log_level_names ) );
+    H1( "     --log-file <string>    Save log to file\n" );
+    H1( "     --log-file-level <int> Log-file level information [\"%s\"]\n"
         "                                - %s\n", strtable_lookup( x264_log_level_names, defaults->i_log_file_level - X264_LOG_NONE ),
-                                      stringify_names( buf, x264_log_level_names ) );
+                                     stringify_names( buf, x264_log_level_names ) );
     H1( "     --psnr                 Enable PSNR computation\n" );
     H1( "     --ssim                 Enable SSIM computation\n" );
     H1( "     --threads <integer>    Force a specific number of threads\n" );
@@ -879,6 +878,8 @@ static void help( x264_param_t *defaults, int longhelp )
     H2( "     --sync-lookahead <int> Number of buffer frames for threaded lookahead\n" );
     H2( "     --non-deterministic    Slightly improve quality of SMP,\n");
     H2( "                            at the cost of repeatability\n" );
+    H2( "     --cpu-independent    Ensure exact reproducibility across different cpus,\n"
+        "                          as opposed to letting them select different algorithms\n" );
     H2( "     --asm <int>            Override CPU detection\n" );
     H2( "     --no-asm               Disable all CPU optimizations\n" );
     H2( "     --visualize            Show MB types overlayed on the encoded video\n" );
@@ -1088,6 +1089,7 @@ static struct option long_options[] =
     { "thread-input",      no_argument, NULL, OPT_THREAD_INPUT },
     { "sync-lookahead",    required_argument, NULL, 0 },
     { "non-deterministic", no_argument, NULL, 0 },
+    { "cpu-independent",   no_argument, NULL, 0 },
     { "psnr",              no_argument, NULL, 0 },
     { "ssim",              no_argument, NULL, 0 },
     { "quiet",             no_argument, NULL, OPT_QUIET },
@@ -1325,6 +1327,8 @@ static int init_vid_filters( char *sequence, hnd_t *handle, video_info_t *info, 
     csp = info->csp & X264_CSP_MASK;
     if( output_csp == X264_CSP_I420 && (csp < X264_CSP_I420 || csp > X264_CSP_NV12) )
         param->i_csp = X264_CSP_I420;
+    else if( output_csp == X264_CSP_I422 && (csp < X264_CSP_I422 || csp > X264_CSP_NV16) )
+        param->i_csp = X264_CSP_I422;
     else if( output_csp == X264_CSP_I444 && (csp < X264_CSP_I444 || csp > X264_CSP_YV24) )
         param->i_csp = X264_CSP_I444;
     else if( output_csp == X264_CSP_RGB && (csp < X264_CSP_BGR || csp > X264_CSP_RGB) )
@@ -1426,6 +1430,7 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
         int long_options_index = -1;
 
         int c = getopt_long( argc, argv, short_options, long_options, &long_options_index );
+        static const uint8_t output_csp_fix[] = { X264_CSP_I420, X264_CSP_I422, X264_CSP_I444, X264_CSP_RGB };
 
         if( c == -1 )
         {
@@ -1617,7 +1622,7 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
             case OPT_OUTPUT_CSP:
                 FAIL_IF_ERROR( parse_enum_value( optarg, output_csp_names, &output_csp ), "Unknown output csp `%s'\n", optarg )
                 // correct the parsed value to the libx264 csp value
-                output_csp = !output_csp ? X264_CSP_I420 : (output_csp == 1 ? X264_CSP_I444 : X264_CSP_RGB);
+                param->i_csp = output_csp = output_csp_fix[output_csp];
                 break;
             default:
 generic_option:
@@ -1809,23 +1814,8 @@ generic_option:
 #endif
     }
 
-    /* Automatically reduce reference frame count to match the user's target level
-     * if the user didn't explicitly set a reference frame count. */
-    if( !b_user_ref )
-    {
-        int mbs = (((param->i_width)+15)>>4) * (((param->i_height)+15)>>4);
-        int i;
-        for( i = 0; x264_levels[i].level_idc != 0; i++ )
-            if( param->i_level_idc == x264_levels[i].level_idc )
-            {
-                while( mbs * 384 * param->i_frame_reference > x264_levels[i].dpb &&
-                       param->i_frame_reference > 1 )
-                {
-                    param->i_frame_reference--;
-                }
-                break;
-            }
-    }
+    if( x264_param_apply_level( param, profile ) < 0 )
+        return -1;
 
     return 0;
 }

@@ -74,6 +74,7 @@ SRCCLI += GPAC/avc_ext.c GPAC/bitstream.c GPAC/box_code_3gpp.c GPAC/box_code_app
           GPAC/sample_descs.c GPAC/slc.c GPAC/stbl_read.c GPAC/stbl_write.c GPAC/token.c \
           GPAC/track.c GPAC/tx3g.c GPAC/url.c GPAC/utf.c
 endif
+
 # Visualization sources
 ifneq ($(findstring HAVE_VISUALIZE 1, $(CONFIG)),)
 SRCS   += common/visualize.c common/display-x11.c
@@ -99,11 +100,11 @@ endif
 ifeq ($(ARCH),X86_64)
 ARCH_X86 = yes
 ASMSRC   = $(X86SRC:-32.asm=-64.asm)
-ASFLAGS += -DARCH_X86_64
+ASFLAGS += -DARCH_X86_64 -DNON_MOD16_STACK=0
 endif
 
 ifdef ARCH_X86
-ASFLAGS += -Icommon/x86/
+ASFLAGS += -Icommon/x86/ -DNON_MOD16_STACK=0
 SRCS   += common/x86/mc-c.c common/x86/predict-c.c
 OBJASM  = $(ASMSRC:%.asm=%.o)
 $(OBJASM): common/x86/x86inc.asm common/x86/x86util.asm
@@ -262,18 +263,23 @@ install-lib-static: lib-static install-lib-dev
 	$(if $(RANLIB), $(RANLIB) $(DESTDIR)$(libdir)/$(LIBX264))
 
 install-lib-shared: lib-shared install-lib-dev
-ifeq ($(SYS),WINDOWS)
-	$(if $(SONAME), install -m 755 $(SONAME) $(DESTDIR)$(bindir))
-else
-	$(if $(SONAME), ln -f -s $(SONAME) $(DESTDIR)$(libdir)/libx264.$(SOSUFFIX))
-	$(if $(SONAME), install -m 755 $(SONAME) $(DESTDIR)$(libdir))
+ifneq ($(IMPLIBNAME),)
+	install -d $(DESTDIR)$(bindir)
+	install -m 755 $(SONAME) $(DESTDIR)$(bindir)
+	install -m 644 $(IMPLIBNAME) $(DESTDIR)$(libdir)
+else ifneq ($(SONAME),)
+	ln -f -s $(SONAME) $(DESTDIR)$(libdir)/libx264.$(SOSUFFIX)
+	install -m 755 $(SONAME) $(DESTDIR)$(libdir)
 endif
-	$(if $(IMPLIBNAME), install -m 644 $(IMPLIBNAME) $(DESTDIR)$(libdir))
 
 uninstall:
 	rm -f $(DESTDIR)$(includedir)/x264.h $(DESTDIR)$(includedir)/x264_config.h $(DESTDIR)$(libdir)/libx264.a
 	rm -f $(DESTDIR)$(bindir)/x264$(EXE) $(DESTDIR)$(libdir)/pkgconfig/x264.pc
-	$(if $(SONAME), rm -f $(DESTDIR)$(libdir)/$(SONAME) $(DESTDIR)$(libdir)/libx264.$(SOSUFFIX))
+ifneq ($(IMPLIBNAME),)
+	rm -f $(DESTDIR)$(bindir)/$(SONAME) $(DESTDIR)$(libdir)/$(IMPLIBNAME)
+else ifneq ($(SONAME),)
+	rm -f $(DESTDIR)$(libdir)/$(SONAME) $(DESTDIR)$(libdir)/libx264.$(SOSUFFIX)
+endif
 
 etags: TAGS
 

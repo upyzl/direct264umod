@@ -138,6 +138,7 @@ static int convert_csp_to_pix_fmt( int csp )
     {
         case X264_CSP_YV12: /* specially handled via swapping chroma */
         case X264_CSP_I420: return csp&X264_CSP_HIGH_DEPTH ? PIX_FMT_YUV420P16 : PIX_FMT_YUV420P;
+        case X264_CSP_YV16: /* specially handled via swapping chroma */
         case X264_CSP_I422: return csp&X264_CSP_HIGH_DEPTH ? PIX_FMT_YUV422P16 : PIX_FMT_YUV422P;
         case X264_CSP_YV24: /* specially handled via swapping chroma */
         case X264_CSP_I444: return csp&X264_CSP_HIGH_DEPTH ? PIX_FMT_YUV444P16 : PIX_FMT_YUV444P;
@@ -426,7 +427,6 @@ static int init( hnd_t *handle, cli_vid_filter_t *filter, video_info_t *info, x2
     static const char *optlist[] = { "width", "height", "sar", "fittobox", "csp", "method", NULL };
     char **opts;
     resizer_hnd_t *h;
-    uint32_t method;
     int src_csp, dst_csp, src_pix_fmt, src_pix_fmt_inv, dst_pix_fmt_inv;
     const x264_cli_csp_t *csp;
     /* if called for normalizing the csp to known formats and the format is not unknown, exit */
@@ -476,11 +476,11 @@ static int init( hnd_t *handle, cli_vid_filter_t *filter, video_info_t *info, x2
     h->dst.pix_fmt = convert_csp_to_pix_fmt( h->dst_csp );
     h->scale = h->dst;
 
-    /* swap chroma planes if YV12/YV24 is involved, as libswscale works with I420/I444 */
+    /* swap chroma planes if YV12/YV16/YV24 is involved, as libswscale works with I420/I422/I444 */
     src_csp = info->csp & (X264_CSP_MASK | X264_CSP_OTHER);
     dst_csp = h->dst_csp & (X264_CSP_MASK | X264_CSP_OTHER);
-    h->pre_swap_chroma  = src_csp == X264_CSP_YV12 || src_csp == X264_CSP_YV24;
-    h->post_swap_chroma = dst_csp == X264_CSP_YV12 || dst_csp == X264_CSP_YV24;
+    h->pre_swap_chroma  = src_csp == X264_CSP_YV12 || src_csp == X264_CSP_YV16 || src_csp == X264_CSP_YV24;
+    h->post_swap_chroma = dst_csp == X264_CSP_YV12 || dst_csp == X264_CSP_YV16 || dst_csp == X264_CSP_YV24;
 
     src_pix_fmt = convert_csp_to_pix_fmt( info->csp );
 
