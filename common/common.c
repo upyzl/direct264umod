@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "encoder/set.h"
 
 #include <stdarg.h>
 #include <ctype.h>
@@ -68,7 +67,7 @@ void x264_param_default( x264_param_t *param )
     param->vui.i_chroma_loc= 0;  /* left center */
     param->i_fps_num       = 25;
     param->i_fps_den       = 1;
-    param->i_level_idc     = X264_LEVEL_IDC_AUTO;
+    param->i_level_idc     = -1;
     param->b_level_force   = 0;
     param->i_slice_max_size = 0;
     param->i_slice_max_mbs = 0;
@@ -513,82 +512,6 @@ int x264_param_apply_profile( x264_param_t *param, const char *profile )
         param->i_cqm_preset = X264_CQM_FLAT;
         param->psz_cqm_file = NULL;
     }
-    return 0;
-}
-
-int x264_param_apply_level( x264_param_t *param, const char *profile )
-{
-    int level_idc = param->i_level_idc;
-    if( level_idc == X264_LEVEL_IDC_AUTO )
-        return 0;
-
-    int prof = BIT_DEPTH == 8 ? PROFILE_HIGH : PROFILE_HIGH10;
-
-    if( profile )
-    {
-        if( !strcasecmp( profile, "baseline" ) )
-            prof = PROFILE_BASELINE;
-        else if( !strcasecmp( profile, "main" ) )
-            prof = PROFILE_MAIN;
-        else if( !strcasecmp( profile, "high" ) )
-            prof = PROFILE_HIGH;
-        else if( !strcasecmp( profile, "high10" ) )
-            prof = PROFILE_HIGH10;
-        else
-        {
-            x264_log( NULL, X264_LOG_ERROR, "invalid profile: %s\n", profile );
-            return -1;
-        }
-    }
-
-    const x264_level_t *l = x264_get_level( level_idc );
-    if( !l )
-    {
-        x264_log( NULL, X264_LOG_ERROR, "Invalid level_idc: %d\n", level_idc );
-        return -1;
-    }
-
-    char level_name[5];
-    snprintf( level_name, sizeof(level_name), "%d.%d", level_idc/10, level_idc%10 );
-    if( level_idc == 9 )
-        strcpy( level_name, "1b" );
-    int cbp_factor = prof==PROFILE_HIGH10 ? 12 :
-                     prof==PROFILE_HIGH ? 5 : 4;
-    int mb_size = 48 * BIT_DEPTH;
-    int mbs = ((param->i_width+15)/16) * ((param->i_height+15)/16);
-    while( 1 )
-    {
-        int num_reorder_frames = param->i_bframe_pyramid ? 2 : param->i_bframe ? 1 : 0;
-        int max_dec_frame_buffering = X264_MIN(X264_REF_MAX, X264_MAX4(param->i_frame_reference, 1 + num_reorder_frames, 
-                                      param->i_bframe_pyramid ? 4 : 1, param->i_dpb_size));
-        int dpb = max_dec_frame_buffering * mbs * mb_size;
-
-        if( dpb <= l->dpb )
-            break;
-
-        if( max_dec_frame_buffering == 4 && param->i_bframe_pyramid )
-            param->i_bframe_pyramid = 0;
-        else if( max_dec_frame_buffering == 2 && param->i_bframe )
-            param->i_bframe = 0;
-        else if( max_dec_frame_buffering == 1 )
-        {
-            x264_log( NULL, X264_LOG_ERROR, "Impossible DPB size %d required by level %s.  Lowest\n", l->dpb, level_name );
-            x264_log( NULL, X264_LOG_ERROR, "possible is %d; try a higher level or lower resolution.\n", dpb );
-            return -1;
-        }
-        else if( param->i_dpb_size > param->i_frame_reference )
-            param->i_dpb_size--;
-        else
-            param->i_frame_reference--;
-    }
-
-#define LIMIT( name, limit, val ) \
-    if( (val) > (limit) || (val) <= 0 ) \
-        val = limit;
-
-    LIMIT( "VBV bitrate", (l->bitrate * cbp_factor) / 4, param->rc.i_vbv_max_bitrate );
-    LIMIT( "VBV buffer", (l->cpb * cbp_factor) / 4, param->rc.i_vbv_buffer_size );
-    LIMIT( "MV range", l->mv_range, param->analyse.i_mv_range );
     return 0;
 }
 

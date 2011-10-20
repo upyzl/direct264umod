@@ -123,18 +123,6 @@ void x264_sps_init( x264_sps_t *sps, int i_id, x264_param_t *param )
     else
         sps->i_profile_idc  = PROFILE_BASELINE;
 
-    /* Hack: if the user specifies a High-compatible VBV, but not a Main-compatible one,
-     * switch to High profile.  Prevents spurious errors on the first pass. */
-    const x264_level_t *l = x264_get_level( param->i_level_idc );
-    if( l && sps->i_profile_idc <= PROFILE_MAIN &&
-        l->bitrate * 5/4 >= param->rc.i_vbv_max_bitrate &&
-        l->cpb     * 5/4 >= param->rc.i_vbv_buffer_size &&
-        (l->bitrate < param->rc.i_vbv_max_bitrate || l->cpb < param->rc.i_vbv_buffer_size) )
-    {
-        sps->i_profile_idc  = PROFILE_HIGH;
-    }
-        
-
     sps->b_constraint_set0  = sps->i_profile_idc == PROFILE_BASELINE;
     /* x264 doesn't support the features that are in Baseline and not in Main,
      * namely arbitrary_slice_order and slice_groups. */
@@ -766,16 +754,6 @@ const x264_level_t x264_levels[] =
     { 51, 983040, 36864, 70778880, 240000, 240000, 512, 16, 24, 2, 1, 1, 1 },
     { 0 }
 };
-
-const x264_level_t *x264_get_level( int level_idc )
-{
-    const x264_level_t *l = x264_levels;
-    while( l->level_idc != 0 && l->level_idc != level_idc )
-        l++;
-    if( l->level_idc )
-        return l;
-    return NULL;
-}
 
 #define ERROR(...)\
 {\

@@ -1814,8 +1814,22 @@ generic_option:
 #endif
     }
 
-    if( x264_param_apply_level( param, profile ) < 0 )
-        return -1;
+    /* Automatically reduce reference frame count to match the user's target level
+     * if the user didn't explicitly set a reference frame count. */
+    if( !b_user_ref )
+    {
+        int mbs = (((param->i_width)+15)>>4) * (((param->i_height)+15)>>4);
+        for( int i = 0; x264_levels[i].level_idc != 0; i++ )
+            if( param->i_level_idc == x264_levels[i].level_idc )
+            {
+                while( mbs * 384 * param->i_frame_reference > x264_levels[i].dpb &&
+                       param->i_frame_reference > 1 )
+                {
+                    param->i_frame_reference--;
+                }
+                break;
+            }
+    }
 
     return 0;
 }

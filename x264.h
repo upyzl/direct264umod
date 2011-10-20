@@ -563,7 +563,6 @@ int x264_param_parse( x264_param_t *, const char *name, const char *value );
  * 2) Custom user options (via param_parse or directly assigned variables)
  * 3) x264_param_apply_fastfirstpass
  * 4) x264_param_apply_profile
- * 5) x264_param_apply_level
  *
  * Additionally, x264CLI does not apply step 3 if the preset chosen is "placebo"
  * or --slow-firstpass is set. */
@@ -615,26 +614,6 @@ static const char * const x264_profile_names[] = { "baseline", "main", "high", "
  *
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
 int     x264_param_apply_profile( x264_param_t *, const char *profile );
-
-/* x264_param_apply_level:
- *      Applies the restrictions of the level set in the passed x264_param_t to
- *      the passed x264_param_t, using the passed profile.
- *      Uses the level_idc values from x264_levels[].
- *
- *      Does nothing (but is considered success) if the level is set to
- *      X264_LEVEL_IDC_AUTO (default).
- *
- *      x264_param_apply_level does not check or modify parameters related
- *      to properties of the source video that may violate levels, e.g.
- *      resolution, framerate, interlacing.  x264_param_apply_level is not
- *      intended as a compatibility check; this is done inside x264 at the
- *      start of encoding.
- *
- *      i_width and i_height must be initialized for x264_param_apply_level
- *      to work properly.
- *
- *      returns 0 on success, negative on failure (e.g. invalid level). */
-int     x264_param_apply_level( x264_param_t *, const char *profile );
 
 /****************************************************************************
  * Picture structures and functions
