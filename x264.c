@@ -135,7 +135,19 @@ static const char * const muxer_names[] =
 
 static const char * const pulldown_names[] = { "none", "22", "32", "64", "double", "triple", "euro", 0 };
 static const char * const log_level_names[] = { "none", "error", "warning", "info", "debug", 0 };
-static const char * const output_csp_names[] = { "i420", "i422", "i444", "rgb", 0 };
+static const char * const output_csp_names[] =
+{
+#if !X264_CHROMA_FORMAT || X264_CHROMA_FORMAT == X264_CSP_I420
+    "i420",
+#endif
+#if !X264_CHROMA_FORMAT || X264_CHROMA_FORMAT == X264_CSP_I422
+    "i422",
+#endif
+#if !X264_CHROMA_FORMAT || X264_CHROMA_FORMAT == X264_CSP_I444
+    "i444", "rgb",
+#endif
+    0
+};
 
 typedef struct
 {
@@ -253,7 +265,7 @@ static void print_version_info()
 #else
     printf( "using an unknown compiler\n" );
 #endif
-    printf( "configuration: --bit-depth=%d\n", x264_bit_depth );
+    printf( "configuration: --bit-depth=%d --chroma-format=%s\n", x264_bit_depth, X264_CHROMA_FORMAT ? (output_csp_names[0]+1) : "all" );
     printf( "x264 license: " );
 #if HAVE_GPL
     printf( "GPL version 2 or later\n" );
@@ -342,14 +354,14 @@ static void print_csp_names( int longhelp )
 #endif
     if( longhelp < 2 )
         return;
-#   define INDENT "                                "
-    printf( "                              - valid csps for `raw' demuxer:\n" );
+#   define INDENT "                                 "
+    printf( "                               - valid csps for `raw' demuxer:\n" );
     printf( INDENT );
     for( i = X264_CSP_NONE+1; i < X264_CSP_CLI_MAX; i++ )
     {
         printf( "%s", x264_cli_csps[i].name );
         if( i+1 < X264_CSP_CLI_MAX )
-            printf( i&7? ", " : ",\n" );
+            printf( i&7? ", " : ",\n"INDENT );
     }
 #if HAVE_LAVF
     printf( "\n" );
@@ -450,7 +462,10 @@ static void help( x264_param_t *defaults, int longhelp )
     H0( "\n" );
     H0( "     --profile <string>     Force the limits of an H.264 profile\n"
         "                                Overrides all settings.\n" );
-    H2( "                                - baseline:\n"
+    H2(
+#if X264_CHROMA_FORMAT <= X264_CSP_I420
+#if BIT_DEPTH==8
+        "                                - baseline:\n"
         "                                  --no-8x8dct --bframes 0 --no-cabac\n"
         "                                  --cqm flat --weightp 0\n"
         "                                  No interlaced.\n"
@@ -461,10 +476,33 @@ static void help( x264_param_t *defaults, int longhelp )
         "                                  No lossless.\n"
         "                                - high:\n"
         "                                  No lossless.\n"
+#endif
         "                                - high10:\n"
         "                                  No lossless.\n"
-        "                                  Support for bit depth 8-10.\n" );
-        else H0( "                                - baseline,main,high,high10\n" );
+        "                                  Support for bit depth 8-10.\n"
+#endif
+#if X264_CHROMA_FORMAT <= X264_CSP_I422
+        "                                - high422:\n"
+        "                                  No lossless.\n"
+        "                                  Support for bit depth 8-10.\n"
+        "                                  Support for 4:2:0/4:2:2 chroma subsampling.\n"
+#endif
+        "                                - high444:\n"
+        "                                  Support for bit depth 8-10.\n"
+        "                                  Support for all chroma subsampling.\n" );
+        else H0(
+        "                                - "
+#if X264_CHROMA_FORMAT <= X264_CSP_I420
+#if BIT_DEPTH==8
+        "baseline,main,high,"
+#endif
+        "high10,"
+#endif
+#if X264_CHROMA_FORMAT <= X264_CSP_I422
+        "high422,"
+#endif
+        "high444\n"
+               );
     H0( "     --preset <string>      Use a preset to select encoding settings [medium]\n"
         "                                Overridden by user settings.\n" );
     H2( "                                - ultrafast:\n"
@@ -784,8 +822,8 @@ static void help( x264_param_t *defaults, int longhelp )
     H2( "     --sync-lookahead <int> Number of buffer frames for threaded lookahead\n" );
     H2( "     --non-deterministic    Slightly improve quality of SMP,\n");
     H2( "                            at the cost of repeatability\n" );
-    H2( "     --cpu-independent      Ensure exact reproducibility across different cpus,\n"
-        "                                as opposed to letting them select different algorithms\n" );
+    H2( "     --cpu-independent    Ensure exact reproducibility across different cpus,\n"
+        "                          as opposed to letting them select different algorithms\n" );
     H2( "     --asm <int>            Override CPU detection\n" );
     H2( "     --no-asm               Disable all CPU optimizations\n" );
     H2( "     --visualize            Show MB types overlayed on the encoded video\n" );
@@ -1328,7 +1366,11 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
         int long_options_index = -1;
 
         int c = getopt_long( argc, argv, short_options, long_options, &long_options_index );
+#if X264_CHROMA_FORMAT
+        static const uint8_t output_csp_fix[] = { X264_CHROMA_FORMAT, X264_CSP_RGB };
+#else
         static const uint8_t output_csp_fix[] = { X264_CSP_I420, X264_CSP_I422, X264_CSP_I444, X264_CSP_RGB };
+#endif
 
         if( c == -1 )
         {

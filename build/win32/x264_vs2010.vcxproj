@@ -84,7 +84,7 @@
       <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>../../common;../../extras;../..;../../pthreads;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;__X264__;HAVE_MMX=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_AVS=1;HAVE_GPAC=1;HAVE_GPL=1;HAVE_THREAD=1;HAVE_INTERLACED=1;PTW32_STATIC_LIB=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;__X264__;HAVE_MMX=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_AVS=1;HAVE_GPAC=1;HAVE_GPL=1;HAVE_THREAD=1;HAVE_INTERLACED=1;X264_CHROMA_FORMAT=0;PTW32_STATIC_LIB=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>
       </ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -133,7 +133,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>../../common;../../extras;../..;../../pthreads;./;../../ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;__X264__;HAVE_MMX=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_AVS=1;HAVE_GPAC=1;HAVE_LAVF=1;HAVE_SWSCALE=1;HAVE_GPL=1;HAVE_THREAD=1;HAVE_INTERLACED=1;PTW32_STATIC_LIB=0;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;__X264__;HAVE_MMX=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_AVS=1;HAVE_GPAC=1;HAVE_LAVF=1;HAVE_SWSCALE=1;HAVE_GPL=1;HAVE_THREAD=1;HAVE_INTERLACED=1;X264_CHROMA_FORMAT=0;PTW32_STATIC_LIB=0;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -189,7 +189,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>../../common;../../extras;../..;../../pthreads;./;../../ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;__X264__;HAVE_MMX=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_AVS=1;HAVE_LAVF=1;HAVE_SWSCALE=1;HAVE_GPAC=1;HAVE_GPL=1;HAVE_THREAD=1;HAVE_INTERLACED=1;PTW32_STATIC_LIB=0;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;__X264__;HAVE_MMX=1;SYS_WINDOWS=1;HAVE_STDINT_H=1;HAVE_AVS=1;HAVE_LAVF=1;HAVE_SWSCALE=1;HAVE_GPAC=1;HAVE_GPL=1;HAVE_THREAD=1;HAVE_INTERLACED=1;X264_CHROMA_FORMAT=0;PTW32_STATIC_LIB=0;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -217,7 +217,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MERGE:.rodata=.rdata /MERGE:.drectve=.data /MERGE:.text.unlikely=.text /MERGE:.text.hot=.text %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>vfw32.lib;winmm.lib;wsock32.lib;libx264.a;libavutil.a;libavcodec.a;libavformat.a;libavcore.a;libpostproc.a;libswscale.a;libgcc.a;libmingwex.a;libz.a;libbz2.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vfw32.lib;winmm.lib;wsock32.lib;libx264.a;libavutil.a;libavcodec.a;libavformat.a;libpostproc.a;libswscale.a;libgcc.a;libmingwex.a;libz.a;libbz2.a;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>bin/x264.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>../../;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
