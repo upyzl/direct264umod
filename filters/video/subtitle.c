@@ -129,9 +129,9 @@ void* subtitle_new_renderer(const csri_fmt *fmt, uint32_t sarw, uint32_t sarh)
 		for (i=1; i<subtotal; i++)
 		{
 			if (csri_add_file(subrenderinst, subfilename[i], flag.name?&flag:NULL))
-				x264_cli_log("subtitle", X264_LOG_INFO, "loaded subtitle \"%s\"\n", subfilename[0]);
+				x264_cli_log("subtitle", X264_LOG_INFO, "loaded subtitle \"%s\"\n", subfilename[i]);
 			else
-				x264_cli_log("subtitle", X264_LOG_WARNING, "failed to load subtitle \"%s\"\n", subfilename[0]);
+				x264_cli_log("subtitle", X264_LOG_WARNING, "failed to load subtitle \"%s\"\n", subfilename[i]);
 		}
 	else
 		x264_cli_log("subtitle", X264_LOG_WARNING, "no csri_add_file interface, only first subtitle loaded\n");

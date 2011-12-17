@@ -76,8 +76,8 @@
 #endif
 
 #ifndef X264_VERSION
-#define X264_VERSION " r2106" // no configure script for msvc
-#define X264_POINTVER "0.119.2106"
+#define X264_VERSION " r2120" // no configure script for msvc
+#define X264_POINTVER "0.120.2120"
 #endif
 
 #if !defined(isfinite) && (SYS_OPENBSD || SYS_SunOS)

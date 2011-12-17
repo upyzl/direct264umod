@@ -3128,6 +3128,8 @@ static int x264_encoder_frame_end( x264_t *h, x264_t *thread_current,
     pic_out->i_pts = h->fdec->i_pts;
     pic_out->i_dts = h->fdec->i_dts;
 
+    pic_out->opaque = h->fenc->opaque;
+
     pic_out->img.i_csp = h->fdec->i_csp;
 #if HIGH_BIT_DEPTH
     pic_out->img.i_csp |= X264_CSP_HIGH_DEPTH;

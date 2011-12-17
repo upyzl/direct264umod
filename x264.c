@@ -53,6 +53,7 @@
 #endif
 
 #if HAVE_SWSCALE
+#undef DECLARE_ALIGNED
 #include <libswscale/swscale.h>
 #endif
 
@@ -148,6 +149,8 @@ static const char * const output_csp_names[] =
 #endif
     0
 };
+
+static const char * const range_names[] = { "auto", "tv", "pc", 0 };
 
 typedef struct
 {
@@ -762,9 +765,8 @@ static void help( x264_param_t *defaults, int longhelp )
     H2( "     --videoformat <string> Specify video format [\"%s\"]\n"
         "                               - component, pal, ntsc, secam, mac, undef\n",
                                      strtable_lookup( x264_vidformat_names, defaults->vui.i_vidformat ) );
-    H2( "     --fullrange <string>   Specify full range samples setting [\"%s\"]\n"
-        "                               - off, on\n",
-                                     strtable_lookup( x264_fullrange_names, defaults->vui.b_fullrange ) );
+    H2( "     --range <string>       Specify color range [\"%s\"]\n"
+        "                               - %s\n", range_names[0], stringify_names( buf, range_names ) );
     H2( "     --colorprim <string>   Specify color primaries [\"%s\"]\n"
         "                               - undef, bt709, bt470m, bt470bg\n"
         "                                 smpte170m, smpte240m, film\n",
@@ -800,6 +802,8 @@ static void help( x264_param_t *defaults, int longhelp )
     H1( "     --output-csp <string>  Specify output colorspace [\"%s\"]\n"
         "                               - %s\n", output_csp_names[0], stringify_names( buf, output_csp_names ) );
     H1( "     --input-depth <int>    Specify input bit depth for raw input\n" );
+    H1( "     --input-range <string> Specify input color range [\"%s\"]\n"
+        "                                - %s\n", range_names[0], stringify_names( buf, range_names ) );
     H1( "     --input-res <intxint>  Specify input resolution (width x height)\n" );
     H1( "     --index <string>       Filename for input index file\n" );
     H0( "     --sar width:height     Specify Sample Aspect Ratio\n" );
@@ -908,6 +912,8 @@ typedef enum
     OPT_INPUT_DEPTH,
     OPT_DTS_COMPRESSION,
     OPT_OUTPUT_CSP,
+    OPT_INPUT_RANGE,
+    OPT_RANGE,
 #if HAVE_AVS
     OPT_DELDUP,
     OPT_SMOOTH,
@@ -1054,7 +1060,7 @@ static struct option long_options[] =
     { "cqm8p",       required_argument, NULL, 0 },
     { "overscan",    required_argument, NULL, 0 },
     { "videoformat", required_argument, NULL, 0 },
-    { "fullrange",   required_argument, NULL, 0 },
+    { "range",       required_argument, NULL, OPT_RANGE },
     { "colorprim",   required_argument, NULL, 0 },
 #if HAVE_AVS
     { "deldup", required_argument, NULL, OPT_DELDUP },
@@ -1087,6 +1093,7 @@ static struct option long_options[] =
     { "input-csp",   required_argument, NULL, OPT_INPUT_CSP },
     { "input-depth", required_argument, NULL, OPT_INPUT_DEPTH },
     { "output-csp",  required_argument, NULL, OPT_OUTPUT_CSP },
+    { "input-range", required_argument, NULL, OPT_INPUT_RANGE },
     {0, 0, 0, 0}
 };
 
@@ -1271,6 +1278,9 @@ static int init_vid_filters( char *sequence, hnd_t *handle, video_info_t *info, 
     else if( output_csp == X264_CSP_RGB && (csp < X264_CSP_BGR || csp > X264_CSP_RGB) )
         param->i_csp = X264_CSP_RGB;
     param->i_csp |= info->csp & X264_CSP_HIGH_DEPTH;
+    /* if the output range is not forced, assign it to the input one now */
+    if( param->vui.b_fullrange == RANGE_AUTO )
+        param->vui.b_fullrange = info->fullrange;
 
     if( x264_init_vid_filter( "resize", handle, &filter, info, param, NULL ) )
         return -1;
@@ -1307,6 +1317,32 @@ static int parse_enum_value( const char *arg, const char * const *names, int *ds
     return -1;
 }
 
+static int64_t time_to_dshow_timestamp(const char* s)
+{
+    int hh = 0, mm = 0; double ss = 0.;
+    int c = 0, i;
+    for (i = 0; s[i]; i++)
+        if (s[i] == ':') c++;
+    switch(c)
+    {
+    case 2:
+        if (sscanf(s,"%d:%d:%lf",&hh,&mm,&ss) != 3)
+            return -1;
+        break;
+    case 1:
+        if (sscanf(s,"%d:%lf",&mm,&ss) != 2)
+            return -1;
+        break;
+    case 0:
+        if (sscanf(s,"%lf",&ss) != 1)
+            return -1;
+        break;
+    default:
+        return -1;
+    }
+    return (int64_t)(ss * 10000000) + (int64_t)mm * 600000000ll + (int64_t)hh * 36000000000ll;
+}
+
 static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
 {
     char *input_filename = NULL;
@@ -1326,7 +1362,7 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
     cli_output_opt_t output_opt;
     char *preset = NULL;
     char *tune = NULL;
-    int output_csp;
+    int output_csp, csp;
     video_info_t info = {0};
     char demuxername[6];
 
@@ -1336,6 +1372,7 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
     memset( &input_opt, 0, sizeof(cli_input_opt_t) );
     memset( &output_opt, 0, sizeof(cli_output_opt_t) );
     input_opt.bit_depth = 8;
+    input_opt.input_range = input_opt.output_range = param->vui.b_fullrange = RANGE_AUTO;
     output_csp = defaults.i_csp;
     opt->b_progress = 1;
 
@@ -1445,9 +1482,7 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
                 {
                     int p = sscanf(optarg,"%lf:%lf:%d:%d:%lf",&minfps,&lth,&mbthresh,&mbmax,&cth);
                     if (p<5 && p>1 && lth>=0.0)
-                    {
                         cth = lth * 2;
-                    }
                 }
                 break;
             case OPT_SMOOTH:
@@ -1482,17 +1517,17 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
                 cropleft &= ~1; croptop &= ~1; cropright &= ~1; cropbottom &= ~1;
                 break;
             case OPT_ST:
+                if (-1 == (starttime = time_to_dshow_timestamp(optarg)))
                 {
-                    int hh,mm;double ss;
-                    if (3 == sscanf(optarg,"%d:%d:%lf",&hh,&mm,&ss))
-                        starttime = (int64_t)(ss * 10000000) + (int64_t)mm * 600000000ll + (int64_t)hh * 36000000000ll;
+                    x264_cli_log( "x264", X264_LOG_ERROR, "invalid timecode %s\n", optarg );
+                    return -1;
                 }
                 break;
             case OPT_ET:
+                if (-1 == (endtime = time_to_dshow_timestamp(optarg)))
                 {
-                    int hh,mm;double ss;
-                    if (3 == sscanf(optarg,"%d:%d:%lf",&hh,&mm,&ss))
-                        endtime = (int64_t)(ss * 10000000) + (int64_t)mm * 600000000ll + (int64_t)hh * 36000000000ll;
+                    x264_cli_log( "x264", X264_LOG_ERROR, "invalid timecode %s\n", optarg );
+                    return -1;
                 }
                 break;
 #endif
@@ -1555,6 +1590,14 @@ static int parse( int argc, char **argv, x264_param_t *param, cli_opt_t *opt )
                 // correct the parsed value to the libx264 csp value
                 param->i_csp = output_csp = output_csp_fix[output_csp];
                 break;
+            case OPT_INPUT_RANGE:
+                FAIL_IF_ERROR( parse_enum_value( optarg, range_names, &input_opt.input_range ), "Unknown input range `%s'\n", optarg )
+                input_opt.input_range += RANGE_AUTO;
+                break;
+            case OPT_RANGE:
+                FAIL_IF_ERROR( parse_enum_value( optarg, range_names, &param->vui.b_fullrange ), "Unknown range `%s'\n", optarg );
+                input_opt.output_range = param->vui.b_fullrange += RANGE_AUTO;
+                break;
             default:
 generic_option:
             {
@@ -1604,10 +1647,11 @@ generic_option:
 
     input_filename = argv[optind++];
 
-    /* set info flags to param flags to be overwritten by demuxer as necessary. */
+    /* set info flags to be overwritten by demuxer as necessary. */
     info.csp        = param->i_csp;
     info.fps_num    = param->i_fps_num;
     info.fps_den    = param->i_fps_den;
+    info.fullrange  = input_opt.input_range == RANGE_PC;
     info.interlaced = param->b_interlaced;
     info.sar_width  = param->vui.i_sar_width;
     info.sar_height = param->vui.i_sar_height;
@@ -1713,6 +1757,8 @@ generic_option:
         info.interlaced = param->b_interlaced;
         info.tff = param->b_tff;
     }
+    if( input_opt.input_range != RANGE_AUTO )
+        info.fullrange = input_opt.input_range;
 
     if( init_vid_filters( vid_filters, &opt->hin, &info, param, output_csp ) )
         return -1;
@@ -1743,6 +1789,15 @@ generic_option:
 #else
         x264_cli_log( "x264", X264_LOG_WARNING, "input appears to be interlaced, but not compiled with interlaced support\n" );
 #endif
+    }
+    /* if the user never specified the output range and the input is now rgb, default it to pc */
+    csp = param->i_csp & X264_CSP_MASK;
+    if( csp >= X264_CSP_BGR && csp <= X264_CSP_RGB )
+    {
+        if( input_opt.output_range == RANGE_AUTO )
+            param->vui.b_fullrange = RANGE_PC;
+        /* otherwise fail if they specified tv */
+        FAIL_IF_ERROR( !param->vui.b_fullrange, "RGB must be PC range" )
     }
 
     /* Automatically reduce reference frame count to match the user's target level

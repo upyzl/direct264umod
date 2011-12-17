@@ -170,15 +170,11 @@ static ALWAYS_INLINE void deblock_chroma_c( pixel *pix, int height, int xstride,
 }
 static void deblock_h_chroma_mbaff_c( pixel *pix, int stride, int alpha, int beta, int8_t *tc0 )
 {
-    int i;
-    for( i = 0; i < 4; i++, pix += stride )
-        deblock_edge_chroma_c( pix, 2, alpha, beta, tc0[i] );
+    deblock_chroma_c( pix, 1, 2, stride, alpha, beta, tc0 );
 }
 static void deblock_h_chroma_422_mbaff_c( pixel *pix, int stride, int alpha, int beta, int8_t *tc0 )
 {
-    int i;
-    for( i = 0; i < 8; i++, pix += stride )
-        deblock_edge_chroma_c( pix, 2, alpha, beta, tc0[i>>1] );
+    deblock_chroma_c( pix, 2, 2, stride, alpha, beta, tc0 );
 }
 static void deblock_v_chroma_c( pixel *pix, int stride, int alpha, int beta, int8_t *tc0 )
 {
@@ -275,15 +271,11 @@ static ALWAYS_INLINE void deblock_chroma_intra_c( pixel *pix, int width, int hei
 }
 static void deblock_h_chroma_intra_mbaff_c( pixel *pix, int stride, int alpha, int beta )
 {
-    int i;
-    for( i = 0; i < 4; i++, pix += stride )
-        deblock_edge_chroma_intra_c( pix, 2, alpha, beta );
+    deblock_chroma_intra_c( pix, 2, 4, 2, stride, alpha, beta );
 }
 static void deblock_h_chroma_422_intra_mbaff_c( pixel *pix, int stride, int alpha, int beta )
 {
-    int i;
-    for( i = 0; i < 8; i++, pix += stride )
-        deblock_edge_chroma_intra_c( pix, 2, alpha, beta );
+    deblock_chroma_intra_c( pix, 2, 8, 2, stride, alpha, beta );
 }
 static void deblock_v_chroma_intra_c( pixel *pix, int stride, int alpha, int beta )
 {
@@ -495,13 +487,15 @@ void x264_frame_deblock_row( x264_t *h, int mb_y )
                 {
                     deblock_edge_intra( h, pixy,           2*stridey,  bs[0][0], luma_qp[0],   a, b, 0, luma_intra_deblock );
                     deblock_edge_intra( h, pixuv,          2*strideuv, bs[0][0], chroma_qp[0], a, b, c, chroma_intra_deblock );
-                    deblock_edge_intra( h, pixuv + uvdiff, 2*strideuv, bs[0][0], chroma_qp[0], a, b, c, chroma_intra_deblock );
+                    if( chroma444 )
+                        deblock_edge_intra( h, pixuv + uvdiff, 2*strideuv, bs[0][0], chroma_qp[0], a, b, c, chroma_intra_deblock );
                 }
                 else
                 {
                     deblock_edge( h, pixy,           2*stridey,  bs[0][0], luma_qp[0],   a, b, 0, luma_deblock );
                     deblock_edge( h, pixuv,          2*strideuv, bs[0][0], chroma_qp[0], a, b, c, chroma_deblock );
-                    deblock_edge( h, pixuv + uvdiff, 2*strideuv, bs[0][0], chroma_qp[0], a, b, c, chroma_deblock );
+                    if( chroma444 )
+                        deblock_edge( h, pixuv + uvdiff, 2*strideuv, bs[0][0], chroma_qp[0], a, b, c, chroma_deblock );
                 }
 
                 left_qp[1] = h->mb.qp[h->mb.i_mb_left_xy[1]];
@@ -511,13 +505,15 @@ void x264_frame_deblock_row( x264_t *h, int mb_y )
                 {
                     deblock_edge_intra( h, pixy           + (stridey<<offy),   2*stridey,  bs[0][4], luma_qp[1],   a, b, 0, luma_intra_deblock );
                     deblock_edge_intra( h, pixuv          + (strideuv<<offuv), 2*strideuv, bs[0][4], chroma_qp[1], a, b, c, chroma_intra_deblock );
-                    deblock_edge_intra( h, pixuv + uvdiff + (strideuv<<offuv), 2*strideuv, bs[0][4], chroma_qp[1], a, b, c, chroma_intra_deblock );
+                    if( chroma444 )
+                        deblock_edge_intra( h, pixuv + uvdiff + (strideuv<<offuv), 2*strideuv, bs[0][4], chroma_qp[1], a, b, c, chroma_intra_deblock );
                 }
                 else
                 {
                     deblock_edge( h, pixy           + (stridey<<offy),   2*stridey,  bs[0][4], luma_qp[1],   a, b, 0, luma_deblock );
                     deblock_edge( h, pixuv          + (strideuv<<offuv), 2*strideuv, bs[0][4], chroma_qp[1], a, b, c, chroma_deblock );
-                    deblock_edge( h, pixuv + uvdiff + (strideuv<<offuv), 2*strideuv, bs[0][4], chroma_qp[1], a, b, c, chroma_deblock );
+                    if( chroma444 )
+                        deblock_edge( h, pixuv + uvdiff + (strideuv<<offuv), 2*strideuv, bs[0][4], chroma_qp[1], a, b, c, chroma_deblock );
                 }
             }
             else

@@ -2419,7 +2419,7 @@ static float rate_estimate_qscale( x264_t *h )
     }
 }
 
-void x264_threads_normalize_predictors( x264_t *h )
+static void x264_threads_normalize_predictors( x264_t *h )
 {
     int i;
     double totalsize = 0, factor;
