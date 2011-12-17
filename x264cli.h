@@ -80,6 +80,13 @@ if( cond )\
 
 #define FAIL_IF_ERR( cond, name, ... ) RETURN_IF_ERR( cond, name, -1, __VA_ARGS__ )
 
+typedef enum
+{
+    RANGE_AUTO = -1,
+    RANGE_TV,
+    RANGE_PC
+} range_enum;
+
 int __stdcall comp_luma(uint8_t *dstplane, uint8_t *srcplane, int w, int h, int thresh, int mb_thresh, int mb_max);
 int __stdcall comp_chroma(uint8_t *dstplane, uint8_t *srcplane, int size, int thresh);
 #endif

@@ -479,7 +479,7 @@ void x264_macroblock_write_cavlc( x264_t *h )
     const int i_mb_type = h->mb.i_type;
     int plane_count = CHROMA444 ? 3 : 1;
     int chroma = !CHROMA444;
-    int i, j, ch, p;
+    int i, p;
 
 #if RDO_SKIP_BS
     s->i_bits_encoded = 0;
@@ -497,6 +497,7 @@ void x264_macroblock_write_cavlc( x264_t *h )
 #if !RDO_SKIP_BS
     if( i_mb_type == I_PCM )
     {
+        int j, ch;
         static const uint8_t i_offsets[3] = {5,23,0};
         uint8_t *p_start = s->p_start;
         bs_write_ue( s, i_offsets[h->sh.i_type] + 25 );

@@ -23,6 +23,8 @@ SRCCLI = x264.c input/input.c input/timecode.c input/rawinput.c input/y4m.c \
 
 SRCSO =
 
+OBJCHK = tools/checkasm.o
+
 CONFIG := $(shell cat config.h)
 
 # GPL-only files
@@ -108,7 +110,7 @@ ASFLAGS += -Icommon/x86/ -DNON_MOD16_STACK=0
 SRCS   += common/x86/mc-c.c common/x86/predict-c.c
 OBJASM  = $(ASMSRC:%.asm=%.o)
 $(OBJASM): common/x86/x86inc.asm common/x86/x86util.asm
-checkasm: tools/checkasm-a.o
+OBJCHK += tools/checkasm-a.o
 endif
 endif
 
@@ -155,7 +157,7 @@ OBJCLI = $(SRCCLI:%.c=%.o)
 OBJSO = $(SRCSO:%.c=%.o)
 DEP  = depend
 
-.PHONY: all default fprofiled generate use clean distclean install uninstall dox test testclean lib-static lib-shared cli install-lib-dev install-lib-static install-lib-shared install-cli
+.PHONY: all default fprofiled generate use clean distclean install uninstall lib-static lib-shared cli install-lib-dev install-lib-static install-lib-shared install-cli
 
 default: $(DEP)
 
@@ -164,17 +166,21 @@ lib-static: $(LIBX264)
 lib-shared: $(SONAME)
 
 $(LIBX264): .depend $(OBJS) $(OBJASM)
+	rm -f $(LIBX264)
 	$(AR)$@ $(OBJS) $(OBJASM)
 	$(if $(RANLIB), $(RANLIB) $@)
 
 $(SONAME): .depend $(OBJS) $(OBJASM) $(OBJSO)
 	$(LD)$@ $(OBJS) $(OBJASM) $(OBJSO) $(SOFLAGS) $(LDFLAGS)
 
+
 x264$(EXE): .depend $(OBJCLI) $(CLI_LIBX264)
 	$(LD)$@ $(OBJCLI) $(CLI_LIBX264) $(LDFLAGSCLI) $(LDFLAGS)
 
-checkasm: tools/checkasm.o $(LIBX264)
-	$(LD)$@ $+ $(LDFLAGS)
+checkasm$(EXE): .depend $(OBJCHK) $(LIBX264)
+	$(LD)$@ $(OBJCHK) $(LIBX264) $(LDFLAGS)
+
+$(OBJS) $(OBJASM) $(OBJSO) $(OBJCLI) $(OBJCHK): .depend
 
 %.o: %.asm
 	$(AS) $(ASFLAGS) -o $@ $<
@@ -239,12 +245,11 @@ use:
 
 clean:
 	rm -f $(OBJS) $(OBJASM) $(OBJCLI) $(OBJSO) $(SONAME) libx264.a *.lib *.exp *.pdb x264 x264.exe .depend TAGS
-	rm -f checkasm checkasm.exe tools/checkasm.o tools/checkasm-a.o
+	rm -f checkasm checkasm.exe $(OBJCHK)
 	rm -f $(SRC2:%.c=%.gcda) $(SRC2:%.c=%.gcno) *.dyn pgopti.dpi pgopti.dpi.lock
 
 distclean: clean
 	rm -f config.mak x264_config.h config.h config.log x264.pc x264.def
-	rm -rf test/
 
 install-cli: cli
 	install -d $(DESTDIR)$(bindir)
