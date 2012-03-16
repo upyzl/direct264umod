@@ -178,6 +178,11 @@ $(LIBX264): .depend $(OBJS) $(OBJASM)
 $(SONAME): .depend $(OBJS) $(OBJASM) $(OBJSO)
 	$(LD)$@ $(OBJS) $(OBJASM) $(OBJSO) $(SOFLAGS) $(LDFLAGS)
 
+ifneq ($(EXE),)
+.PHONY: x264 checkasm
+x264: x264$(EXE)
+checkasm: checkasm$(EXE)
+endif
 
 x264$(EXE): .depend $(OBJCLI) $(CLI_LIBX264)
 	$(LD)$@ $(OBJCLI) $(CLI_LIBX264) $(LDFLAGSCLI) $(LDFLAGS)
