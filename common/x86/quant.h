@@ -1,7 +1,7 @@
 /*****************************************************************************
  * quant.h: x86 quantization and level-run
  *****************************************************************************
- * Copyright (C) 2005-2011 x264 project
+ * Copyright (C) 2005-2012 x264 project
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Jason Garrett-Glaser <darkshikari@gmail.com>
@@ -110,5 +110,17 @@ int x264_coeff_level_run8_mmx2( dctcoef *dct, x264_run_level_t *runlevel );
 int x264_coeff_level_run8_mmx2_lzcnt( dctcoef *dct, x264_run_level_t *runlevel );
 int x264_coeff_level_run8_sse2( dctcoef *dct, x264_run_level_t *runlevel );
 int x264_coeff_level_run8_sse2_lzcnt( dctcoef *dct, x264_run_level_t *runlevel );
+int x264_trellis_cabac_4x4_sse2 ( TRELLIS_PARAMS, int b_ac );
+int x264_trellis_cabac_4x4_ssse3( TRELLIS_PARAMS, int b_ac );
+int x264_trellis_cabac_8x8_sse2 ( TRELLIS_PARAMS, int b_interlaced );
+int x264_trellis_cabac_8x8_ssse3( TRELLIS_PARAMS, int b_interlaced );
+int x264_trellis_cabac_4x4_psy_sse2 ( TRELLIS_PARAMS, int b_ac, dctcoef *fenc_dct, int i_psy_trellis );
+int x264_trellis_cabac_4x4_psy_ssse3( TRELLIS_PARAMS, int b_ac, dctcoef *fenc_dct, int i_psy_trellis );
+int x264_trellis_cabac_8x8_psy_sse2 ( TRELLIS_PARAMS, int b_interlaced, dctcoef *fenc_dct, int i_psy_trellis );
+int x264_trellis_cabac_8x8_psy_ssse3( TRELLIS_PARAMS, int b_interlaced, dctcoef *fenc_dct, int i_psy_trellis );
+int x264_trellis_cabac_dc_sse2 ( TRELLIS_PARAMS, int i_coefs );
+int x264_trellis_cabac_dc_ssse3( TRELLIS_PARAMS, int i_coefs );
+int x264_trellis_cabac_chroma_422_dc_sse2 ( TRELLIS_PARAMS );
+int x264_trellis_cabac_chroma_422_dc_ssse3( TRELLIS_PARAMS );
 
 #endif

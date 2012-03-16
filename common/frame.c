@@ -1,7 +1,7 @@
 /*****************************************************************************
  * frame.c: frame handling
  *****************************************************************************
- * Copyright (C) 2003-2011 x264 project
+ * Copyright (C) 2003-2012 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
@@ -361,7 +361,7 @@ int x264_frame_copy_picture( x264_t *h, x264_frame_t *dst, x264_picture_t *src )
 
     if ( i_csp >= X264_CSP_BGR )
     {
-        int b = i_csp==X264_CSP_RGB ? 2 : 0;
+        int b = i_csp==X264_CSP_RGB;
         stride[0] = src->img.i_stride[0];
         pix[0] = src->img.plane[0];
         if( src->img.i_csp & X264_CSP_VFLIP )
@@ -369,8 +369,8 @@ int x264_frame_copy_picture( x264_t *h, x264_frame_t *dst, x264_picture_t *src )
             pix[0] += (h->param.i_height-1) * stride[0];
             stride[0] = -stride[0];
         }
-        h->mc.plane_copy_deinterleave_rgb( dst->plane[1], dst->i_stride[1],
-                                           dst->plane[b], dst->i_stride[b],
+        h->mc.plane_copy_deinterleave_rgb( dst->plane[1+b], dst->i_stride[1+b],
+                                           dst->plane[0], dst->i_stride[0],
                                            dst->plane[2-b], dst->i_stride[2-b],
                                            (pixel*)pix[0], stride[0]/sizeof(pixel), i_csp==X264_CSP_BGRA ? 4 : 3, h->param.i_width, h->param.i_height );
     }

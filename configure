@@ -200,6 +200,33 @@ as_check() {
     return $res
 }
 
+rc_check() {
+    log_check "whether $RC works"
+    echo "$1" > conftest.rc
+    if [ $compiler = ICL ]; then
+        rc_cmd="$RC -foconftest.o conftest.rc"
+    else
+        rc_cmd="$RC -o conftest.o conftest.rc"
+    fi
+    if $rc_cmd >conftest.log 2>&1; then
+        res=$?
+        log_ok
+    else
+        res=$?
+        log_fail
+        log_msg "Failed commandline was:"
+        log_msg "--------------------------------------------------"
+        log_msg "$rc_cmd"
+        cat conftest.log >> config.log
+        log_msg "--------------------------------------------------"
+        log_msg "Failed program was:"
+        log_msg "--------------------------------------------------"
+        cat conftest.rc >> config.log
+        log_msg "--------------------------------------------------"
+    fi
+    return $res
+}
+
 define() {
     echo "#define $1$([ -n "$2" ] && echo " $2" || echo " 1")" >> config.h
 }
@@ -211,6 +238,11 @@ die() {
 }
 
 rm -f x264_config.h config.h config.mak config.log x264.pc x264.def conftest*
+
+SRCPATH="$(cd $(dirname $0); pwd)"
+[ "$SRCPATH" = "$(pwd)" ] && SRCPATH=.
+[ -n "$(echo $SRCPATH | grep ' ')" ] && die "Out of tree builds are impossible with whitespace in source path."
+[ -e "$SRCPATH/config.h" -o -e "$SRCPATH/x264_config.h" ] && die "Out of tree builds are impossible with config.h/x264_config.h in source dir."
 
 prefix='/usr/local'
 exec_prefix='${prefix}'
@@ -241,7 +273,7 @@ bit_depth="8"
 chroma_format="all"
 compiler="GNU"
 
-CFLAGS="$CFLAGS -Wall -I."
+CFLAGS="$CFLAGS -Wall -I. -I\$(SRCPATH)"
 LDFLAGS="$LDFLAGS"
 LDFLAGSCLI="$LDFLAGSCLI"
 ASFLAGS="$ASFLAGS"
@@ -383,10 +415,10 @@ RANLIB="${RANLIB-${cross_prefix}ranlib}"
 STRIP="${STRIP-${cross_prefix}strip}"
 
 if [ "x$host" = x ]; then
-    host=`./config.guess`
+    host=`${SRCPATH}/config.guess`
 fi
 # normalize a triplet into a quadruplet
-host=`./config.sub $host`
+host=`${SRCPATH}/config.sub $host`
 
 # split $host
 host_cpu="${host%%-*}"
@@ -400,7 +432,7 @@ if [[ $host_os = mingw* || $host_os = cygwin* ]]; then
         # Windows Intel Compiler creates dependency generation with absolute Windows paths, Cygwin's make does not support Windows paths.
         [[ $host_os = cygwin* ]] && die "Windows Intel Compiler support requires MSYS"
         compiler=ICL
-        CFLAGS="$CFLAGS -Qstd=c99 -nologo -Qms0 -DHAVE_STRING_H -Iextras"
+        CFLAGS="$CFLAGS -Qstd=c99 -nologo -Qms0 -DHAVE_STRING_H -I\$(SRCPATH)/extras"
         QPRE="-Q"
         `$CC 2>&1 | grep -q IA-32` && host_cpu=i486
         `$CC 2>&1 | grep -q "Intel(R) 64"` && host_cpu=x86_64
@@ -605,6 +637,14 @@ case $host_cpu in
         ;;
 esac
 
+RC=""
+if [ $SYS = WINDOWS ]; then
+    [ $compiler = ICL ] && RC="rc" || RC="${cross_prefix}windres"
+    if ! rc_check "0 RCDATA {0}" ; then
+        RC=""
+    fi
+fi
+
 log_msg "x264 configure script"
 if [ -n "$*" ]; then
     msg="Command line options:"
@@ -767,10 +807,10 @@ if [ "$swscale" = "auto" ] ; then
     [ -z "$SWSCALE_LIBS" ] && SWSCALE_LIBS="-lswscale -lavutil"
 
     if cc_check "libswscale/swscale.h" "$SWSCALE_CFLAGS $SWSCALE_LIBS" "sws_init_context(0,0,0);" ; then
-        if cc_check "libavutil/pixdesc.h" "$SWSCALE_CFLAGS $SWSCALE_LIBS" "av_get_pix_fmt_name(0);" ; then
+        if cpp_check "libavutil/pixdesc.h" "$SWSCALE_CFLAGS $SWSCALE_LIBS" "defined(PIX_FMT_RGB)" ; then
             swscale="yes"
         else
-            echo "Warning: av_get_pix_fmt_name is missing from libavutil, update for swscale support"
+            echo "Warning: PIX_FMT_RGB is missing from libavutil, update for swscale support"
         fi
     fi
 fi
@@ -933,7 +973,9 @@ fi
 
 if [ "$bit_depth" -gt "8" ]; then
     define HIGH_BIT_DEPTH
-    ASFLAGS="$ASFLAGS -DHIGH_BIT_DEPTH"
+    ASFLAGS="$ASFLAGS -DHIGH_BIT_DEPTH=1"
+else
+    ASFLAGS="$ASFLAGS -DHIGH_BIT_DEPTH=0"
 fi
 
 if [ "$chroma_format" != "all" ]; then
@@ -961,6 +1003,7 @@ if [ $compiler = ICL ]; then
     LDFLAGSCLI="$(icl_ldflags $LDFLAGSCLI)"
     LIBX264=libx264.lib
     RANLIB=
+    [ -n "$RC" ] && RC="$RC -I. -I\$(SRCPATH)/extras -fo"
     STRIP=
     if [ $debug = yes ]; then
         LDFLAGS="-debug $LDFLAGS"
@@ -974,6 +1017,7 @@ else
     DEPMT="-MT"
     LD="$CC -o "
     LIBX264=libx264.a
+    [ -n "$RC" ] && RC="$RC -I. -o "
 fi
 if [ $compiler = GNU ]; then
     PROF_GEN_CC="-fprofile-generate"
@@ -1006,6 +1050,7 @@ EOF
 # generate config files
 
 cat > config.mak << EOF
+SRCPATH=$SRCPATH
 prefix=$prefix
 exec_prefix=$exec_prefix
 bindir=$bindir
@@ -1025,6 +1070,7 @@ RANLIB=$RANLIB
 STRIP=$STRIP
 AS=$AS
 ASFLAGS=$ASFLAGS
+RC=$RC
 EXE=$EXE
 MP4=$gpac
 HAVE_GETOPT_LONG=$HAVE_GETOPT_LONG
@@ -1046,7 +1092,7 @@ if [ "$cli" = "yes" ]; then
 fi
 
 if [ "$shared" = "yes" ]; then
-    API=$(grep '#define X264_BUILD' < x264.h | cut -f 3 -d ' ')
+    API=$(grep '#define X264_BUILD' < ${SRCPATH}/x264.h | cut -f 3 -d ' ')
     if [ "$SYS" = "WINDOWS" -o "$SYS" = "CYGWIN" ]; then
         echo "SONAME=libx264-$API.dll" >> config.mak
         if [ $compiler = ICL ]; then
@@ -1055,7 +1101,7 @@ if [ "$shared" = "yes" ]; then
             # MSVC link does not act similarly, so it is required to make an export definition out of x264.h and use it at link time
             echo "SOFLAGS=-dll -def:x264.def -implib:\$(IMPLIBNAME) $SOFLAGS" >> config.mak
             echo "EXPORTS" > x264.def
-            grep "^\(int\|void\|x264_t\|extern\).*x264.*[\[(;]" x264.h | sed -e "s/.*\(x264.*\)[\[(].*/\1/;s/.*\(x264.*\);/\1/;s/open/open_$API/g" >> x264.def
+            grep "^\(int\|void\|x264_t\|extern\).*x264.*[\[(;]" ${SRCPATH}/x264.h | sed -e "s/.*\(x264.*\)[\[(].*/\1/;s/.*\(x264.*\);/\1/;s/open/open_$API/g" >> x264.def
         else
             echo 'IMPLIBNAME=libx264.dll.a' >> config.mak
             echo "SOFLAGS=-shared -Wl,--out-implib,\$(IMPLIBNAME) -Wl,--enable-auto-image-base $SOFLAGS" >> config.mak
@@ -1097,7 +1143,7 @@ fi
 echo "LDFLAGSCLI = $LDFLAGSCLI" >> config.mak
 echo "CLI_LIBX264 = $CLI_LIBX264" >> config.mak
 
-./version.sh >> x264_config.h
+${SRCPATH}/version.sh "${SRCPATH}" >> x264_config.h
 
 pclibs="-L$libdir -lx264 $libpthread"
 
@@ -1148,6 +1194,9 @@ echo >> config.log
 cat conftest.log >> config.log
 cat conftest.log
 rm conftest.log
+
+[ "$SRCPATH" != "." ] && ln -sf ${SRCPATH}/Makefile ./Makefile
+mkdir -p common/{arm,ppc,sparc,x86} encoder extras filters/video input output tools
 
 echo
 echo "You can run 'make' or 'make fprofiled' now."

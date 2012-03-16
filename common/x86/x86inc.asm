@@ -1,11 +1,12 @@
 ;*****************************************************************************
 ;* x86inc.asm: x264asm abstraction layer
 ;*****************************************************************************
-;* Copyright (C) 2005-2011 x264 project
+;* Copyright (C) 2005-2012 x264 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Anton Mitrofanov <BugMaster@narod.ru>
 ;*          Jason Garrett-Glaser <darkshikari@gmail.com>
+;*          Henrik Gramner <hengar-6@student.ltu.se>
 ;*
 ;* Permission to use, copy, modify, and/or distribute this software for any
 ;* purpose with or without fee is hereby granted, provided that the above
@@ -35,11 +36,13 @@
 
 %define program_name x264
 
-%ifdef ARCH_X86_64
+%define WIN64  0
+%define UNIX64 0
+%if ARCH_X86_64
     %ifidn __OUTPUT_FORMAT__,win32
-        %define WIN64
+        %define WIN64  1
     %else
-        %define UNIX64
+        %define UNIX64 1
     %endif
 %endif
 
@@ -79,9 +82,9 @@
     %endif
 %endmacro
 
-%ifdef WIN64
+%if WIN64
     %define PIC
-%elifndef ARCH_X86_64
+%elif ARCH_X86_64 == 0
 ; x86_32 doesn't require PIC.
 ; Some distros prefer shared objects to be PIC, but nothing breaks if
 ; the code contains a few textrels, so we'll skip that complexity.
@@ -90,6 +93,9 @@
 %ifdef PIC
     default rel
 %endif
+
+; Always use long nops (reduces 0x90 spam in disassembly on x86_32)
+CPU intelnop
 
 ; Macros to eliminate most code duplication between x86_32 and x86_64:
 ; Currently this works only for leaf functions which load all their arguments
@@ -121,46 +127,52 @@
 ; registers:
 ; rN and rNq are the native-size register holding function argument N
 ; rNd, rNw, rNb are dword, word, and byte size
+; rNh is the high 8 bits of the word size
 ; rNm is the original location of arg N (a register or on the stack), dword
 ; rNmp is native size
 
-%macro DECLARE_REG 6
+%macro DECLARE_REG 2-3
     %define r%1q %2
-    %define r%1d %3
-    %define r%1w %4
-    %define r%1b %5
-    %define r%1m %6
-    %ifid %6 ; i.e. it's a register
+    %define r%1d %2d
+    %define r%1w %2w
+    %define r%1b %2b
+    %define r%1h %2h
+    %if %0 == 2
+        %define r%1m  %2d
         %define r%1mp %2
-    %elifdef ARCH_X86_64 ; memory
-        %define r%1mp qword %6
+    %elif ARCH_X86_64 ; memory
+        %define r%1m [rsp + stack_offset + %3]
+        %define r%1mp qword r %+ %1m
     %else
-        %define r%1mp dword %6
+        %define r%1m [esp + stack_offset + %3]
+        %define r%1mp dword r %+ %1m
     %endif
     %define r%1  %2
 %endmacro
 
-%macro DECLARE_REG_SIZE 2
+%macro DECLARE_REG_SIZE 3
     %define r%1q r%1
     %define e%1q r%1
     %define r%1d e%1
     %define e%1d e%1
     %define r%1w %1
     %define e%1w %1
+    %define r%1h %3
+    %define e%1h %3
     %define r%1b %2
     %define e%1b %2
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
     %define r%1  e%1
 %endif
 %endmacro
 
-DECLARE_REG_SIZE ax, al
-DECLARE_REG_SIZE bx, bl
-DECLARE_REG_SIZE cx, cl
-DECLARE_REG_SIZE dx, dl
-DECLARE_REG_SIZE si, sil
-DECLARE_REG_SIZE di, dil
-DECLARE_REG_SIZE bp, bpl
+DECLARE_REG_SIZE ax, al, ah
+DECLARE_REG_SIZE bx, bl, bh
+DECLARE_REG_SIZE cx, cl, ch
+DECLARE_REG_SIZE dx, dl, dh
+DECLARE_REG_SIZE si, sil, null
+DECLARE_REG_SIZE di, dil, null
+DECLARE_REG_SIZE bp, bpl, null
 
 ; t# defines for when per-arch register allocation is more complex than just function arguments
 
@@ -178,14 +190,15 @@ DECLARE_REG_SIZE bp, bpl
         %define t%1q t%1 %+ q
         %define t%1d t%1 %+ d
         %define t%1w t%1 %+ w
+        %define t%1h t%1 %+ h
         %define t%1b t%1 %+ b
         %rotate 1
     %endrep
 %endmacro
 
-DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9
+DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
 
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
     %define gprsize 8
 %else
     %define gprsize 4
@@ -199,6 +212,33 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9
 %macro POP 1
     pop %1
     %assign stack_offset stack_offset-gprsize
+%endmacro
+
+%macro PUSH_IF_USED 1-*
+    %rep %0
+        %if %1 < regs_used
+            PUSH r%1
+        %endif
+        %rotate 1
+    %endrep
+%endmacro
+
+%macro POP_IF_USED 1-*
+    %rep %0
+        %if %1 < regs_used
+            pop r%1
+        %endif
+        %rotate 1
+    %endrep
+%endmacro
+
+%macro LOAD_IF_USED 1-*
+    %rep %0
+        %if %1 < num_args
+            mov r%1, r %+ %1 %+ mp
+        %endif
+        %rotate 1
+    %endrep
 %endmacro
 
 %macro SUB 2
@@ -240,6 +280,7 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9
             CAT_UNDEF arg_name %+ %%i, q
             CAT_UNDEF arg_name %+ %%i, d
             CAT_UNDEF arg_name %+ %%i, w
+            CAT_UNDEF arg_name %+ %%i, h
             CAT_UNDEF arg_name %+ %%i, b
             CAT_UNDEF arg_name %+ %%i, m
             CAT_UNDEF arg_name, %%i
@@ -247,51 +288,50 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9
         %endrep
     %endif
 
+    %assign %%stack_offset stack_offset
+    %undef stack_offset ; so that the current value of stack_offset doesn't get baked in by xdefine
     %assign %%i 0
     %rep %0
         %xdefine %1q r %+ %%i %+ q
         %xdefine %1d r %+ %%i %+ d
         %xdefine %1w r %+ %%i %+ w
+        %xdefine %1h r %+ %%i %+ h
         %xdefine %1b r %+ %%i %+ b
         %xdefine %1m r %+ %%i %+ m
         CAT_XDEFINE arg_name, %%i, %1
         %assign %%i %%i+1
         %rotate 1
     %endrep
-    %assign n_arg_names %%i
+    %assign stack_offset %%stack_offset
+    %assign n_arg_names %0
 %endmacro
 
-%ifdef WIN64 ; Windows x64 ;=================================================
+%if WIN64 ; Windows x64 ;=================================================
 
-DECLARE_REG 0, rcx, ecx, cx,  cl,  ecx
-DECLARE_REG 1, rdx, edx, dx,  dl,  edx
-DECLARE_REG 2, r8,  r8d, r8w, r8b, r8d
-DECLARE_REG 3, r9,  r9d, r9w, r9b, r9d
-DECLARE_REG 4, rdi, edi, di,  dil, [rsp + stack_offset + 40]
-DECLARE_REG 5, rsi, esi, si,  sil, [rsp + stack_offset + 48]
-DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
-%define r7m [rsp + stack_offset + 64]
-%define r8m [rsp + stack_offset + 72]
-
-%macro LOAD_IF_USED 2 ; reg_id, number_of_args
-    %if %1 < %2
-        mov r%1, [rsp + stack_offset + 8 + %1*8]
-    %endif
-%endmacro
+DECLARE_REG 0,  rcx
+DECLARE_REG 1,  rdx
+DECLARE_REG 2,  R8
+DECLARE_REG 3,  R9
+DECLARE_REG 4,  R10, 40
+DECLARE_REG 5,  R11, 48
+DECLARE_REG 6,  rax, 56
+DECLARE_REG 7,  rdi, 64
+DECLARE_REG 8,  rsi, 72
+DECLARE_REG 9,  rbx, 80
+DECLARE_REG 10, rbp, 88
+DECLARE_REG 11, R12, 96
+DECLARE_REG 12, R13, 104
+DECLARE_REG 13, R14, 112
+DECLARE_REG 14, R15, 120
 
 %macro PROLOGUE 2-4+ 0 ; #args, #regs, #xmm_regs, arg_names...
-    ASSERT %2 >= %1
+    %assign num_args %1
     %assign regs_used %2
-    ASSERT regs_used <= 7
-    %if regs_used > 4
-        push r4
-        push r5
-        %assign stack_offset stack_offset+16
-    %endif
+    ASSERT regs_used >= num_args
+    ASSERT regs_used <= 15
+    PUSH_IF_USED 7, 8, 9, 10, 11, 12, 13, 14
     WIN64_SPILL_XMM %3
-    LOAD_IF_USED 4, %1
-    LOAD_IF_USED 5, %1
-    LOAD_IF_USED 6, %1
+    LOAD_IF_USED 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
     DEFINE_ARGS %4
 %endmacro
 
@@ -302,12 +342,11 @@ DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
     %endif
     ASSERT xmm_regs_used <= 16
     %if xmm_regs_used > 6
-        sub rsp, (xmm_regs_used-6)*16+16
-        %assign stack_offset stack_offset+(xmm_regs_used-6)*16+16
+        SUB rsp, (xmm_regs_used-6)*16+16
         %assign %%i xmm_regs_used
         %rep (xmm_regs_used-6)
             %assign %%i %%i-1
-            movdqa [rsp + (%%i-6)*16+8], xmm %+ %%i
+            movdqa [rsp + (%%i-6)*16+(~stack_offset&8)], xmm %+ %%i
         %endrep
     %endif
 %endmacro
@@ -317,7 +356,7 @@ DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
         %assign %%i xmm_regs_used
         %rep (xmm_regs_used-6)
             %assign %%i %%i-1
-            movdqa xmm %+ %%i, [%1 + (%%i-6)*16+8]
+            movdqa xmm %+ %%i, [%1 + (%%i-6)*16+(~stack_offset&8)]
         %endrep
         add %1, (xmm_regs_used-6)*16+16
     %endif
@@ -329,132 +368,114 @@ DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
     %assign xmm_regs_used 0
 %endmacro
 
+%define has_epilogue regs_used > 7 || xmm_regs_used > 6
+
 %macro RET 0
     WIN64_RESTORE_XMM_INTERNAL rsp
-    %if regs_used > 4
-        pop r5
-        pop r4
-    %endif
+    POP_IF_USED 14, 13, 12, 11, 10, 9, 8, 7
     ret
 %endmacro
 
-%macro REP_RET 0
-    %if regs_used > 4 || xmm_regs_used > 6
-        RET
-    %else
-        rep ret
-    %endif
-%endmacro
+%elif ARCH_X86_64 ; *nix x64 ;=============================================
 
-%elifdef ARCH_X86_64 ; *nix x64 ;=============================================
-
-DECLARE_REG 0, rdi, edi, di,  dil, edi
-DECLARE_REG 1, rsi, esi, si,  sil, esi
-DECLARE_REG 2, rdx, edx, dx,  dl,  edx
-DECLARE_REG 3, rcx, ecx, cx,  cl,  ecx
-DECLARE_REG 4, r8,  r8d, r8w, r8b, r8d
-DECLARE_REG 5, r9,  r9d, r9w, r9b, r9d
-DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 8]
-%define r7m [rsp + stack_offset + 16]
-%define r8m [rsp + stack_offset + 24]
-
-%macro LOAD_IF_USED 2 ; reg_id, number_of_args
-    %if %1 < %2
-        mov r%1, [rsp - 40 + %1*8]
-    %endif
-%endmacro
+DECLARE_REG 0,  rdi
+DECLARE_REG 1,  rsi
+DECLARE_REG 2,  rdx
+DECLARE_REG 3,  rcx
+DECLARE_REG 4,  R8
+DECLARE_REG 5,  R9
+DECLARE_REG 6,  rax, 8
+DECLARE_REG 7,  R10, 16
+DECLARE_REG 8,  R11, 24
+DECLARE_REG 9,  rbx, 32
+DECLARE_REG 10, rbp, 40
+DECLARE_REG 11, R12, 48
+DECLARE_REG 12, R13, 56
+DECLARE_REG 13, R14, 64
+DECLARE_REG 14, R15, 72
 
 %macro PROLOGUE 2-4+ ; #args, #regs, #xmm_regs, arg_names...
-    ASSERT %2 >= %1
-    ASSERT %2 <= 7
-    LOAD_IF_USED 6, %1
+    %assign num_args %1
+    %assign regs_used %2
+    ASSERT regs_used >= num_args
+    ASSERT regs_used <= 15
+    PUSH_IF_USED 9, 10, 11, 12, 13, 14
+    LOAD_IF_USED 6, 7, 8, 9, 10, 11, 12, 13, 14
     DEFINE_ARGS %4
 %endmacro
 
-%macro RET 0
-    ret
-%endmacro
+%define has_epilogue regs_used > 9
 
-%macro REP_RET 0
-    rep ret
+%macro RET 0
+    POP_IF_USED 14, 13, 12, 11, 10, 9
+    ret
 %endmacro
 
 %else ; X86_32 ;==============================================================
 
-DECLARE_REG 0, eax, eax, ax, al,   [esp + stack_offset + 4]
-DECLARE_REG 1, ecx, ecx, cx, cl,   [esp + stack_offset + 8]
-DECLARE_REG 2, edx, edx, dx, dl,   [esp + stack_offset + 12]
-DECLARE_REG 3, ebx, ebx, bx, bl,   [esp + stack_offset + 16]
-DECLARE_REG 4, esi, esi, si, null, [esp + stack_offset + 20]
-DECLARE_REG 5, edi, edi, di, null, [esp + stack_offset + 24]
-DECLARE_REG 6, ebp, ebp, bp, null, [esp + stack_offset + 28]
-%define r7m [esp + stack_offset + 32]
-%define r8m [esp + stack_offset + 36]
+DECLARE_REG 0, eax, 4
+DECLARE_REG 1, ecx, 8
+DECLARE_REG 2, edx, 12
+DECLARE_REG 3, ebx, 16
+DECLARE_REG 4, esi, 20
+DECLARE_REG 5, edi, 24
+DECLARE_REG 6, ebp, 28
 %define rsp esp
 
-%macro PUSH_IF_USED 1 ; reg_id
-    %if %1 < regs_used
-        push r%1
-        %assign stack_offset stack_offset+4
-    %endif
+%macro DECLARE_ARG 1-*
+    %rep %0
+        %define r%1m [esp + stack_offset + 4*%1 + 4]
+        %define r%1mp dword r%1m
+        %rotate 1
+    %endrep
 %endmacro
 
-%macro POP_IF_USED 1 ; reg_id
-    %if %1 < regs_used
-        pop r%1
-    %endif
-%endmacro
-
-%macro LOAD_IF_USED 2 ; reg_id, number_of_args
-    %if %1 < %2
-        mov r%1, [esp + stack_offset + 4 + %1*4]
-    %endif
-%endmacro
+DECLARE_ARG 7, 8, 9, 10, 11, 12, 13, 14
 
 %macro PROLOGUE 2-4+ ; #args, #regs, #xmm_regs, arg_names...
-    ASSERT %2 >= %1
+    %assign num_args %1
     %assign regs_used %2
-    ASSERT regs_used <= 7
-    PUSH_IF_USED 3
-    PUSH_IF_USED 4
-    PUSH_IF_USED 5
-    PUSH_IF_USED 6
-    LOAD_IF_USED 0, %1
-    LOAD_IF_USED 1, %1
-    LOAD_IF_USED 2, %1
-    LOAD_IF_USED 3, %1
-    LOAD_IF_USED 4, %1
-    LOAD_IF_USED 5, %1
-    LOAD_IF_USED 6, %1
+    %if regs_used > 7
+        %assign regs_used 7
+    %endif
+    ASSERT regs_used >= num_args
+    PUSH_IF_USED 3, 4, 5, 6
+    LOAD_IF_USED 0, 1, 2, 3, 4, 5, 6
     DEFINE_ARGS %4
 %endmacro
 
-%macro RET 0
-    POP_IF_USED 6
-    POP_IF_USED 5
-    POP_IF_USED 4
-    POP_IF_USED 3
-    ret
-%endmacro
+%define has_epilogue regs_used > 3
 
-%macro REP_RET 0
-    %if regs_used > 3
-        RET
-    %else
-        rep ret
-    %endif
+%macro RET 0
+    POP_IF_USED 6, 5, 4, 3
+    ret
 %endmacro
 
 %endif ;======================================================================
 
-%ifndef WIN64
+%if WIN64 == 0
 %macro WIN64_SPILL_XMM 1
 %endmacro
 %macro WIN64_RESTORE_XMM 1
 %endmacro
 %endif
 
+%macro REP_RET 0
+    %if has_epilogue
+        RET
+    %else
+        rep ret
+    %endif
+%endmacro
 
+%macro TAIL_CALL 2 ; callee, is_nonadjacent
+    %if has_epilogue
+        call %1
+        RET
+    %elif %2
+        jmp %1
+    %endif
+%endmacro
 
 ;=============================================================================
 ; arch-independent part
@@ -533,6 +554,8 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
 %assign cpuflags_avx      (1<<9) | cpuflags_sse42
 %assign cpuflags_xop      (1<<10)| cpuflags_avx
 %assign cpuflags_fma4     (1<<11)| cpuflags_avx
+%assign cpuflags_avx2     (1<<12)| cpuflags_avx
+%assign cpuflags_fma3     (1<<13)| cpuflags_avx
 
 %assign cpuflags_cache32  (1<<16)
 %assign cpuflags_cache64  (1<<17)
@@ -540,6 +563,9 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
 %assign cpuflags_lzcnt    (1<<19)
 %assign cpuflags_misalign (1<<20)
 %assign cpuflags_aligned  (1<<21) ; not a cpu feature, but a function variant
+%assign cpuflags_bmi1     (1<<22)
+%assign cpuflags_bmi2     (1<<23)|cpuflags_bmi1
+%assign cpuflags_tbm      (1<<24)|cpuflags_bmi1
 
 %define    cpuflag(x) ((cpuflags & (cpuflags_ %+ x)) == (cpuflags_ %+ x))
 %define notcpuflag(x) ((cpuflags & (cpuflags_ %+ x)) != (cpuflags_ %+ x))
@@ -609,7 +635,7 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
     %define RESET_MM_PERMUTATION INIT_XMM %1
     %define mmsize 16
     %define num_mmregs 8
-    %ifdef ARCH_X86_64
+    %if ARCH_X86_64
     %define num_mmregs 16
     %endif
     %define mova movdqa
@@ -630,7 +656,7 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
     %define RESET_MM_PERMUTATION INIT_YMM %1
     %define mmsize 32
     %define num_mmregs 8
-    %ifdef ARCH_X86_64
+    %if ARCH_X86_64
     %define num_mmregs 16
     %endif
     %define mova vmovaps
@@ -801,10 +827,10 @@ INIT_XMM
 ;%4 == number of operands given
 ;%5+: operands
 %macro RUN_AVX_INSTR 6-7+
-    %ifid %5
-        %define %%sizeofreg sizeof%5
-    %elifid %6
+    %ifid %6
         %define %%sizeofreg sizeof%6
+    %elifid %5
+        %define %%sizeofreg sizeof%5
     %else
         %define %%sizeofreg mmsize
     %endif
@@ -927,6 +953,9 @@ AVX_INSTR mulsd, 1, 0, 1
 AVX_INSTR mulss, 1, 0, 1
 AVX_INSTR orpd, 1, 0, 1
 AVX_INSTR orps, 1, 0, 1
+AVX_INSTR pabsb, 0, 0, 0
+AVX_INSTR pabsw, 0, 0, 0
+AVX_INSTR pabsd, 0, 0, 0
 AVX_INSTR packsswb, 0, 0, 0
 AVX_INSTR packssdw, 0, 0, 0
 AVX_INSTR packuswb, 0, 0, 0
@@ -978,6 +1007,7 @@ AVX_INSTR pminsd, 0, 0, 1
 AVX_INSTR pminub, 0, 0, 1
 AVX_INSTR pminuw, 0, 0, 1
 AVX_INSTR pminud, 0, 0, 1
+AVX_INSTR pmovmskb, 0, 0, 0
 AVX_INSTR pmulhuw, 0, 0, 1
 AVX_INSTR pmulhrsw, 0, 0, 1
 AVX_INSTR pmulhw, 0, 0, 1
@@ -988,6 +1018,9 @@ AVX_INSTR pmuldq, 0, 0, 1
 AVX_INSTR por, 0, 0, 1
 AVX_INSTR psadbw, 0, 0, 1
 AVX_INSTR pshufb, 0, 0, 0
+AVX_INSTR pshufd, 0, 1, 0
+AVX_INSTR pshufhw, 0, 1, 0
+AVX_INSTR pshuflw, 0, 1, 0
 AVX_INSTR psignb, 0, 0, 0
 AVX_INSTR psignw, 0, 0, 0
 AVX_INSTR psignd, 0, 0, 0
@@ -1009,6 +1042,7 @@ AVX_INSTR psubsb, 0, 0, 0
 AVX_INSTR psubsw, 0, 0, 0
 AVX_INSTR psubusb, 0, 0, 0
 AVX_INSTR psubusw, 0, 0, 0
+AVX_INSTR ptest, 0, 0, 0
 AVX_INSTR punpckhbw, 0, 0, 0
 AVX_INSTR punpckhwd, 0, 0, 0
 AVX_INSTR punpckhdq, 0, 0, 0

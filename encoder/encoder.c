@@ -1,7 +1,7 @@
 /*****************************************************************************
  * encoder.c: top-level encoder functions
  *****************************************************************************
- * Copyright (C) 2003-2011 x264 project
+ * Copyright (C) 2003-2012 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
@@ -61,7 +61,11 @@ static double x264_psnr( double sqe, double size )
 
 static double x264_ssim( double ssim )
 {
-    return -10.0 * log10( 1 - ssim );
+    double inv_ssim = 1 - ssim;
+    if( inv_ssim <= 0.0000000001 ) /* Max 100dB */
+        return 100;
+
+    return -10.0 * log10( inv_ssim );
 }
 
 static void x264_frame_dump( x264_t *h )
@@ -480,7 +484,6 @@ static int x264_validate_parameters( x264_t *h, int b_open )
 
     if( h->param.i_threads == X264_THREADS_AUTO )
         h->param.i_threads = (x264_cpu_num_processors() + x264_cpu_num_physical_cores()) * (h->param.b_sliced_threads?2:3)/4;
-    h->param.i_threads = x264_clip3( h->param.i_threads, 1, X264_THREAD_MAX );
     if( h->param.i_threads > 1 )
     {
 #if !HAVE_THREAD
@@ -495,7 +498,8 @@ static int x264_validate_parameters( x264_t *h, int b_open )
             h->param.i_threads = X264_MIN( h->param.i_threads, max_threads );
         }
     }
-    else
+    h->param.i_threads = x264_clip3( h->param.i_threads, 1, X264_THREAD_MAX );
+    if( h->param.i_threads == 1 )
         h->param.b_sliced_threads = 0;
     h->i_thread_frames = h->param.b_sliced_threads ? 1 : h->param.i_threads;
     if( h->i_thread_frames > 1 )
@@ -649,6 +653,8 @@ static int x264_validate_parameters( x264_t *h, int b_open )
         h->param.b_intra_refresh = 0;
         h->param.i_frame_reference = X264_MIN( h->param.i_frame_reference, 6 );
         h->param.i_dpb_size = X264_MIN( h->param.i_dpb_size, 6 );
+        /* Don't use I-frames, because Blu-ray treats them the same as IDR. */
+        h->param.i_keyint_min = 1;
         /* Due to the proliferation of broken players that don't handle dupes properly. */
         h->param.analyse.i_weighted_pred = X264_MIN( h->param.analyse.i_weighted_pred, X264_WEIGHTP_SIMPLE );
         if( h->param.b_fake_interlaced )
@@ -1184,10 +1190,6 @@ x264_t *x264_encoder_open( x264_param_t *param )
     x264_predict_8x16c_init( h->param.cpu, h->predict_8x16c );
     x264_predict_8x8_init( h->param.cpu, h->predict_8x8, &h->predict_8x8_filter );
     x264_predict_4x4_init( h->param.cpu, h->predict_4x4 );
-    if( h->param.b_cabac )
-        x264_cabac_init( h );
-    else
-        x264_cavlc_init();
     x264_pixel_init( h->param.cpu, &h->pixf );
     x264_dct_init( h->param.cpu, &h->dctf );
     x264_zigzag_init( h->param.cpu, &h->zigzagf_progressive, &h->zigzagf_interlaced );
@@ -1196,7 +1198,10 @@ x264_t *x264_encoder_open( x264_param_t *param )
     x264_quant_init( h, h->param.cpu, &h->quantf );
     x264_deblock_init( h->param.cpu, &h->loopf, PARAM_INTERLACED );
     x264_bitstream_init( h->param.cpu, &h->bsf );
-    x264_dct_init_weights();
+    if( h->param.b_cabac )
+        x264_cabac_init( h );
+    else
+        x264_stack_align( x264_cavlc_init, h );
 
     mbcmp_init( h );
     chroma_dsp_init( h );
@@ -2242,7 +2247,7 @@ reencode:
         total_bits = bs_pos(&h->out.bs) + x264_cabac_pos(&h->cabac);
         mb_size = total_bits - mb_spos;
 
-        if( slice_max_size )
+        if( slice_max_size && (!SLICE_MBAFF || (i_mb_y&1)) )
         {
             /* Check for escape bytes. */
             uint8_t *end = h->param.b_cabac ? h->cabac.p : h->out.bs.p;
@@ -2258,7 +2263,7 @@ reencode:
             /* We'll just re-encode this last macroblock if we go over the max slice size. */
             if( total_bits - starting_bits > slice_max_size && !h->mb.b_reencode_mb )
             {
-                if( mb_xy != h->sh.i_first_mb )
+                if( mb_xy-SLICE_MBAFF*h->mb.i_mb_stride != h->sh.i_first_mb )
                 {
                     h->stat.frame.i_mv_bits = mv_bits_bak;
                     h->stat.frame.i_tex_bits = tex_bits_bak;
@@ -2915,7 +2920,10 @@ int     x264_encoder_encode( x264_t *h,
             h->fdec->i_pir_end_col = lrintf(h->fdec->f_pir_position);
             /* If our intra refresh has reached the right side of the frame, we're done. */
             if( h->fdec->i_pir_end_col >= h->mb.i_mb_width - 1 )
+            {
                 h->fdec->f_pir_position = h->mb.i_mb_width;
+                h->fdec->i_pir_end_col = h->mb.i_mb_width - 1;
+            }
         }
     }
 

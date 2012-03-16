@@ -1,7 +1,7 @@
 ;*****************************************************************************
 ;* quant-a.asm: x86 quantization and level-run
 ;*****************************************************************************
-;* Copyright (C) 2005-2011 x264 project
+;* Copyright (C) 2005-2012 x264 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Jason Garrett-Glaser <darkshikari@gmail.com>
@@ -86,11 +86,11 @@ cextern pd_1024
 %macro QUANT_DC_START 0
     movd       m6, r1m     ; mf
     movd       m7, r2m     ; bias
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
     SPLATD     m6, m6
     SPLATD     m7, m7
 %elif cpuflag(sse4) ; ssse3, but not faster on conroe
-    movdqa     m5, [pb_01]
+    mova       m5, [pb_01]
     pshufb     m6, m5
     pshufb     m7, m5
 %else
@@ -100,13 +100,11 @@ cextern pd_1024
 %endmacro
 
 %macro QUANT_END 0
+    xor      eax, eax
 %if cpuflag(sse4)
-    xor      eax, eax
     ptest     m5, m5
-    setne     al
 %else ; !sse4
-    xor      eax, eax
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
 %if mmsize == 16
     packsswb  m5, m5
 %endif
@@ -124,11 +122,11 @@ cextern pd_1024
     test     ecx, ecx
 %endif
 %endif
-    setne     al
 %endif ; cpuflag
+    setne     al
 %endmacro
 
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 %macro QUANT_ONE_DC 4
 %if cpuflag(sse4)
     mova        m0, [%1]
@@ -136,13 +134,6 @@ cextern pd_1024
     paddd       m1, %3
     pmulld      m1, %2
     psrad       m1, 16
-    PSIGND      m1, m0
-    mova      [%1], m1
-%if %4
-    por         m5, m1
-%else
-    SWAP         5, 1
-%endif
 %else ; !sse4
     mova        m0, [%1]
     ABSD        m1, m0
@@ -154,19 +145,15 @@ cextern pd_1024
     psllq       m2, 32
     paddd       m1, m2
     psrld       m1, 16
+%endif ; cpuflag
     PSIGND      m1, m0
     mova      [%1], m1
-%if %4
-    por         m5, m1
-%else
-    SWAP         5, 1
-%endif
-%endif ; cpuflag
+    ACCUM     por, 5, 1, %4
 %endmacro
 
 %macro QUANT_TWO_DC 4
 %if cpuflag(sse4)
-    mova        m0, [%1]
+    mova        m0, [%1       ]
     mova        m1, [%1+mmsize]
     ABSD        m2, m0
     ABSD        m3, m1
@@ -178,13 +165,9 @@ cextern pd_1024
     psrad       m3, 16
     PSIGND      m2, m0
     PSIGND      m3, m1
-    mova      [%1], m2
-    mova      [%1+mmsize], m3
-%if %4
-    por         m5, m2
-%else
-    SWAP         5, 2
-%endif
+    mova [%1       ], m2
+    mova [%1+mmsize], m3
+    ACCUM      por, 5, 2, %4
     por         m5, m3
 %else ; !sse4
     QUANT_ONE_DC %1, %2, %3, %4
@@ -208,34 +191,26 @@ cextern pd_1024
     psrad       m1, 16
     PSIGND      m1, m0
     mova      [%1], m1
-%if %4
-    por         m5, m1
-%else
-    SWAP         5, 1
-%endif
+    ACCUM      por, 5, 1, %4
 %endmacro
 
 %macro QUANT_TWO_AC 4
 %if cpuflag(sse4)
-    mova        m0, [%1]
+    mova        m0, [%1       ]
     mova        m1, [%1+mmsize]
     ABSD        m2, m0
     ABSD        m3, m1
-    paddd       m2, [%3]
+    paddd       m2, [%3       ]
     paddd       m3, [%3+mmsize]
-    pmulld      m2, [%2]
+    pmulld      m2, [%2       ]
     pmulld      m3, [%2+mmsize]
     psrad       m2, 16
     psrad       m3, 16
     PSIGND      m2, m0
     PSIGND      m3, m1
-    mova      [%1], m2
-    mova      [%1+mmsize], m3
-%if %4
-    por         m5, m2
-%else
-    SWAP         5,  2
-%endif
+    mova [%1       ], m2
+    mova [%1+mmsize], m3
+    ACCUM      por, 5, 2, %4
     por         m5, m3
 %else ; !sse4
     QUANT_ONE_AC_MMX %1, %2, %3, %4
@@ -296,7 +271,7 @@ QUANT_AC 8, 8
 
 %endif ; HIGH_BIT_DEPTH
 
-%ifndef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH == 0
 %macro QUANT_ONE 4
 ;;; %1      (m64)       dct[y][x]
 ;;; %2      (m64/mmx)   mf[y][x] or mf[0][0] (as uint16_t)
@@ -307,11 +282,7 @@ QUANT_AC 8, 8
     pmulhuw    m0, %2   ; divide
     PSIGNW     m0, m1   ; restore sign
     mova       %1, m0   ; store
-%if %4
-    por        m5, m0
-%else
-    SWAP        5, 0
-%endif
+    ACCUM     por, 5, 0, %4
 %endmacro
 
 %macro QUANT_TWO 7
@@ -327,13 +298,8 @@ QUANT_AC 8, 8
     PSIGNW     m2, m3
     mova       %1, m0
     mova       %2, m2
-%if %7
-    por        m5, m0
+    ACCUM     por, 5, 0, %7
     por        m5, m2
-%else
-    SWAP        5,  0
-    por        m5, m2
-%endif
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -371,7 +337,7 @@ cglobal %1, 3,3
 
 INIT_MMX mmx2
 QUANT_DC quant_2x2_dc, 1
-%ifndef ARCH_X86_64 ; not needed because sse2 is faster
+%if ARCH_X86_64 == 0 ; not needed because sse2 is faster
 QUANT_DC quant_4x4_dc, 4
 INIT_MMX mmx
 QUANT_AC quant_4x4, 4
@@ -409,7 +375,7 @@ QUANT_AC quant_8x8, 8
 ;;; %2,%3   dequant_mf[i_mf][y][x]
 ;;; m2      i_qbits
     mova     m0, %2
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
     pmaddwd  m0, %1
     pslld    m0, m2
 %else
@@ -427,8 +393,8 @@ QUANT_AC quant_8x8, 8
 ;;; m3      f
 ;;; m4      0
     mova      m0, %1
-%ifdef HIGH_BIT_DEPTH
-    pmadcswd   m0, m0, %2, m3
+%if HIGH_BIT_DEPTH
+    pmadcswd  m0, m0, %2, m3
     psrad     m0, m2
 %else
     punpckhwd m1, m0, m4
@@ -475,9 +441,9 @@ QUANT_AC quant_8x8, 8
 %endrep
 %endmacro
 
-%ifdef WIN64
+%if WIN64
     DECLARE_REG_TMP 6,3,2
-%elifdef ARCH_X86_64
+%elif ARCH_X86_64
     DECLARE_REG_TMP 4,3,2
 %else
     DECLARE_REG_TMP 2,0,1
@@ -491,7 +457,7 @@ QUANT_AC quant_8x8, 8
     sub  t2d, t1d
     sub  t2d, t1d   ; i_mf = i_qp % 6
     shl  t2d, %1
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
     add  r1, t2     ; dequant_mf[i_mf]
 %else
     add  r1, r1mp   ; dequant_mf[i_mf]
@@ -522,8 +488,7 @@ cglobal dequant_%1x%1, 0,3,6
     psrld m3, 1
     DEQUANT_LOOP DEQUANT32_R, %1*%1/4, %3
 
-%ifndef HIGH_BIT_DEPTH
-%if notcpuflag(avx)
+%if HIGH_BIT_DEPTH == 0 && notcpuflag(avx)
 cglobal dequant_%1x%1_flat16, 0,3
     movifnidn t2d, r2m
 %if %1 == 8
@@ -563,11 +528,10 @@ cglobal dequant_%1x%1_flat16, 0,3
     DEQUANT16_FLAT [r1+32], 32, 96
 %endif
     RET
-%endif ; !AVX
-%endif ; !HIGH_BIT_DEPTH
+%endif ; !HIGH_BIT_DEPTH && !AVX
 %endmacro ; DEQUANT
 
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 INIT_XMM sse2
 DEQUANT 4, 4, 1
 DEQUANT 8, 6, 1
@@ -575,7 +539,7 @@ INIT_XMM xop
 DEQUANT 4, 4, 1
 DEQUANT 8, 6, 1
 %else
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx
 DEQUANT 4, 4, 1
 DEQUANT 8, 6, 1
@@ -621,7 +585,7 @@ cglobal dequant_4x4dc, 0,3,6
     psrld m4, 1
     movd  m2, [r1]
 %assign x 0
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
     pshufd m2, m2, 0
 %rep SIZEOF_PIXEL*32/mmsize
     mova      m0, [r0+x]
@@ -650,13 +614,13 @@ cglobal dequant_4x4dc, 0,3,6
     RET
 %endmacro
 
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 INIT_XMM sse2
 DEQUANT_DC d, pmaddwd
 INIT_XMM xop
 DEQUANT_DC d, pmaddwd
 %else
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx2
 DEQUANT_DC w, pmullw
 %endif
@@ -667,7 +631,7 @@ DEQUANT_DC w, pmullw
 %endif
 
 ; t4 is eax for return value.
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
     DECLARE_REG_TMP 0,1,2,3,6,4  ; Identical for both Windows and *NIX
 %else
     DECLARE_REG_TMP 4,1,2,3,0,5
@@ -682,7 +646,7 @@ DEQUANT_DC w, pmullw
 %if cpuflag(sse4)
     %assign %%regs %%regs-1
 %endif
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
     %assign %%regs %%regs+1      ; t0-t4 are volatile on x86-64
 %endif
 cglobal optimize_chroma_2x2_dc, 0,%%regs,7
@@ -777,7 +741,7 @@ cglobal optimize_chroma_2x2_dc, 0,%%regs,7
     REP_RET
 %endmacro
 
-%ifndef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH == 0
 INIT_XMM sse2
 OPTIMIZE_CHROMA_2x2_DC
 INIT_XMM ssse3
@@ -788,7 +752,7 @@ INIT_XMM avx
 OPTIMIZE_CHROMA_2x2_DC
 %endif ; !HIGH_BIT_DEPTH
 
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 ;-----------------------------------------------------------------------------
 ; void denoise_dct( int32_t *dct, uint32_t *sum, uint32_t *offset, int size )
 ;-----------------------------------------------------------------------------
@@ -821,7 +785,7 @@ cglobal denoise_dct, 4,4,8
     REP_RET
 %endmacro
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx
 DENOISE_DCT
 %endif
@@ -868,7 +832,7 @@ cglobal denoise_dct, 4,4,7
     REP_RET
 %endmacro
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx
 DENOISE_DCT
 %endif
@@ -887,7 +851,7 @@ DENOISE_DCT
 
 %macro DECIMATE_MASK 5
 %if mmsize==16
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
     movdqa   xmm0, [%3+ 0]
     movdqa   xmm1, [%3+32]
     packssdw xmm0, [%3+16]
@@ -905,7 +869,7 @@ DENOISE_DCT
     pmovmskb %2, xmm0
 
 %else ; mmsize==8
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
     movq      mm0, [%3+ 0]
     movq      mm1, [%3+16]
     movq      mm2, [%3+32]
@@ -950,10 +914,10 @@ cextern decimate_table8
 ;This is not true for score64.
 cglobal decimate_score%1, 1,3
 %ifdef PIC
-    lea r10, [decimate_table4]
-    lea r11, [decimate_mask_table4]
-    %define table r10
-    %define mask_table r11
+    lea r4, [decimate_table4]
+    lea r5, [decimate_mask_table4]
+    %define table r4
+    %define mask_table r5
 %else
     %define table decimate_table4
     %define mask_table decimate_mask_table4
@@ -995,7 +959,7 @@ cglobal decimate_score%1, 1,3
 
 %endmacro
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx2
 DECIMATE4x4 15
 DECIMATE4x4 16
@@ -1018,11 +982,11 @@ DECIMATE4x4 16
 
 %macro DECIMATE8x8 0
 
-%ifdef ARCH_X86_64
-cglobal decimate_score64, 1,4
+%if ARCH_X86_64
+cglobal decimate_score64, 1,5
 %ifdef PIC
-    lea r10, [decimate_table8]
-    %define table r10
+    lea r4, [decimate_table8]
+    %define table r4
 %else
     %define table decimate_table8
 %endif
@@ -1116,7 +1080,7 @@ cglobal decimate_score64, 1,5
 
 %endmacro
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx2
 DECIMATE8x8
 %endif
@@ -1147,7 +1111,7 @@ DECIMATE8x8
 %endif
 %endmacro
 
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 %macro LAST_MASK 3-4
 %if %1 == 4
     movq     mm0, [%3]
@@ -1225,7 +1189,7 @@ cglobal coeff_last8, 1,3
     RET
 %endmacro
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx2
 COEFF_LAST8
 %endif
@@ -1265,7 +1229,7 @@ COEFF_LAST8
 %endmacro
 
 %macro COEFF_LAST48 0
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
 cglobal coeff_last4, 1,1
     BSR  rax, [r0], 0x3f
     shr  eax, 4
@@ -1314,7 +1278,7 @@ cglobal coeff_last16, 1,3
     BSR eax, r1d, 0x1f
     RET
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 cglobal coeff_last64, 1, 5-mmsize/16
     pxor m2, m2
     LAST_MASK 16, r2d, r0+SIZEOF_DCTCOEF* 32, r4d
@@ -1353,7 +1317,7 @@ cglobal coeff_last64, 1,4
 %endif
 %endmacro
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX mmx2
 COEFF_LAST
 %endif
@@ -1367,9 +1331,9 @@ COEFF_LAST
 ;-----------------------------------------------------------------------------
 
 ; t6 = eax for return, t3 = ecx for shift, t[01] = r[01] for x86_64 args
-%ifdef WIN64
+%if WIN64
     DECLARE_REG_TMP 3,1,2,0,4,5,6
-%elifdef ARCH_X86_64
+%elif ARCH_X86_64
     DECLARE_REG_TMP 0,1,2,3,4,5,6
 %else
     DECLARE_REG_TMP 6,3,2,1,4,5,0
@@ -1381,8 +1345,16 @@ cglobal coeff_level_run%1,0,7
     movifnidn t1, r1mp
     pxor    m2, m2
     LAST_MASK %1, t5d, t0-(%1&1)*SIZEOF_DCTCOEF, t4d
-    not    t5d
-    shl    t5d, 32-((%1+1)&~1)
+%if %1==15
+    shr   t5d, 1
+%elif %1==8
+    and   t5d, 0xff
+%elif %1==4
+    and   t5d, 0xf
+%endif
+    xor   t5d, (1<<%1)-1
+    mov   [t1+4], t5d
+    shl    t5d, 32-%1
     mov    t4d, %1-1
     LZCOUNT t3d, t5d, 0x1f
     xor    t6d, t6d
@@ -1392,14 +1364,14 @@ cglobal coeff_level_run%1,0,7
     mov   [t1], t4d
 .loop:
     LZCOUNT t3d, t5d, 0x1f
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
     mov    t2d, [t0+t4*4]
-    mov   [t1+t6  +4+16*4], t3b
-    mov   [t1+t6*4+ 4], t2d
+    mov   [t1+t6+8+16*4], t3b
+    mov   [t1+t6*4+ 8], t2d
 %else
     mov    t2w, [t0+t4*2]
-    mov   [t1+t6  +4+16*2], t3b
-    mov   [t1+t6*2+ 4], t2w
+    mov   [t1+t6+8+16*2], t3b
+    mov   [t1+t6*2+ 8], t2w
 %endif
     inc    t3d
     shl    t5d, t3b
@@ -1410,20 +1382,20 @@ cglobal coeff_level_run%1,0,7
 %endmacro
 
 INIT_MMX mmx2
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 COEFF_LEVELRUN 15
 COEFF_LEVELRUN 16
 %endif
 COEFF_LEVELRUN 4
 COEFF_LEVELRUN 8
 INIT_XMM sse2
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 COEFF_LEVELRUN 8
 %endif
 COEFF_LEVELRUN 15
 COEFF_LEVELRUN 16
 INIT_XMM sse2, lzcnt
-%ifdef HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH
 COEFF_LEVELRUN 8
 %endif
 COEFF_LEVELRUN 15

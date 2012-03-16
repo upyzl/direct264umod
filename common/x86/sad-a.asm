@@ -1,7 +1,7 @@
 ;*****************************************************************************
 ;* sad-a.asm: x86 sad functions
 ;*****************************************************************************
-;* Copyright (C) 2003-2011 x264 project
+;* Copyright (C) 2003-2012 x264 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Jason Garrett-Glaser <darkshikari@gmail.com>
@@ -242,11 +242,7 @@ SAD_W16
     psadbw  m1, m3
     psadbw  m2, m4
     lea     r2, [r2+2*r3]
-%if %1
-    paddw   m0, m1
-%else
-    SWAP     0, 1
-%endif
+    ACCUM paddw, 0, 1, %1
     paddw   m0, m2
 %endmacro
 
@@ -264,7 +260,7 @@ cglobal pixel_sad_8x16_sse2, 4,4
 ; void pixel_vsad( pixel *src, int stride );
 ;-----------------------------------------------------------------------------
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 INIT_MMX
 cglobal pixel_vsad_mmx2, 3,3
     mova      m0, [r0]
@@ -287,10 +283,11 @@ cglobal pixel_vsad_mmx2, 3,3
     psadbw    m3, m5
     psadbw    m4, m6
     psadbw    m5, m7
-    paddw     m0, m2
-    paddw     m0, m3
-    paddw     m0, m4
-    paddw     m0, m5
+    ;max sum: 31*16*255(pixel_max)=126480
+    paddd     m0, m2
+    paddd     m0, m3
+    paddd     m0, m4
+    paddd     m0, m5
     mova      m2, m6
     mova      m3, m7
     sub      r2d, 2
@@ -321,7 +318,8 @@ cglobal pixel_vsad_sse2, 3,3
     jg .loop
 .end:
     movhlps   m1, m0
-    paddw     m0, m1
+    ;max sum: 31*16*255(pixel_max)=126480
+    paddd     m0, m1
     movd     eax, m0
     RET
 
@@ -389,25 +387,13 @@ cglobal intra_sad_x3_4x4_mmx2, 3,3
     movq      m5, [r0+FENC_STRIDE*%1]
     movq      m4, m5
     psadbw    m4, m0
-%if %1
-    paddw     m1, m4
-%else
-    SWAP       1, 4
-%endif
+    ACCUM  paddw, 1, 4, %1
     movq      m4, m5
     psadbw    m4, m6
-%if %1
-    paddw     m2, m4
-%else
-    SWAP       2, 4
-%endif
+    ACCUM  paddw, 2, 4, %1
     pshufw    m4, m7, %2
     psadbw    m5, m4
-%if %1
-    paddw     m3, m5
-%else
-    SWAP       3, 5
-%endif
+    ACCUM  paddw, 3, 5, %1
 %endmacro
 
 INIT_MMX
@@ -465,13 +451,8 @@ cglobal intra_sad_x3_8x8_mmx2, 3,3
     psadbw      m5, m6
     paddw       m1, m3
     paddw       m4, m5
-%if %1
-    paddw       m0, m1
-    paddw       m2, m4
-%else
-    SWAP 0,1
-    SWAP 2,4
-%endif
+    ACCUM    paddw, 0, 1, %1
+    ACCUM    paddw, 2, 4, %1
 %endmacro
 
 %macro INTRA_SAD_8x8C 0
@@ -862,7 +843,7 @@ INTRA_SAD16
 %endmacro
 
 %macro SAD_X3_END 0
-%ifdef UNIX64
+%if UNIX64
     movd    [r5+0], mm0
     movd    [r5+4], mm1
     movd    [r5+8], mm2
@@ -890,7 +871,7 @@ INTRA_SAD16
 ;-----------------------------------------------------------------------------
 %macro SAD_X 3
 cglobal pixel_sad_x%1_%2x%3_mmx2, %1+2, %1+2
-%ifdef WIN64
+%if WIN64
     %assign i %1+1
     movsxd r %+ i, r %+ i %+ d
 %endif
@@ -1032,7 +1013,7 @@ SAD_X 4,  4,  4
     movq    xmm7, [r0]
     movq    xmm4, [r1]
     movq    xmm5, [r2]
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
     movq    xmm6, [r3]
     movq    xmm8, [r4]
     movhps  xmm7, [r0+FENC_STRIDE]
@@ -1109,7 +1090,7 @@ SAD_X 4,  4,  4
     movu   xmm4, [r1+%2]
     movu   xmm5, [r2+%2]
     movu   xmm6, [r3+%2]
-%ifdef ARCH_X86_64
+%if ARCH_X86_64
     movu   xmm8, [r4+%2]
     psadbw xmm4, xmm7
     psadbw xmm5, xmm7
@@ -1179,7 +1160,7 @@ SAD_X 4,  4,  4
     paddw   xmm0, xmm4
     paddw   xmm1, xmm5
     paddw   xmm2, xmm6
-%ifdef UNIX64
+%if UNIX64
     movd [r5+0], xmm0
     movd [r5+4], xmm1
     movd [r5+8], xmm2
@@ -1213,7 +1194,7 @@ SAD_X 4,  4,  4
 ;-----------------------------------------------------------------------------
 %macro SAD_X_SSE2 3
 cglobal pixel_sad_x%1_%2x%3, 2+%1,2+%1,9
-%ifdef WIN64
+%if WIN64
     %assign i %1+1
     movsxd r %+ i, r %+ i %+ d
 %endif
@@ -1435,9 +1416,9 @@ cglobal pixel_sad_x3_%1x%2_cache%3_%6
     CHECK_SPLIT r3m, %1, %3
     jmp pixel_sad_x3_%1x%2_%4
 .split:
-%ifdef ARCH_X86_64
-    PROLOGUE 6,7
-%ifdef WIN64
+%if ARCH_X86_64
+    PROLOGUE 6,9
+%if WIN64
     movsxd r4, r4d
     sub  rsp, 8
 %endif
@@ -1446,27 +1427,27 @@ cglobal pixel_sad_x3_%1x%2_cache%3_%6
     mov  r2, r1
     mov  r1, FENC_STRIDE
     mov  r3, r4
-    mov  r10, r0
-    mov  r11, r5
+    mov  r7, r0
+    mov  r8, r5
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11], eax
-%ifdef WIN64
+    mov  [r8], eax
+%if WIN64
     mov  r2, [rsp]
 %else
     pop  r2
 %endif
-    mov  r0, r10
+    mov  r0, r7
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11+4], eax
-%ifdef WIN64
+    mov  [r8+4], eax
+%if WIN64
     mov  r2, [rsp+8]
 %else
     pop  r2
 %endif
-    mov  r0, r10
+    mov  r0, r7
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11+8], eax
-%ifdef WIN64
+    mov  [r8+8], eax
+%if WIN64
     add  rsp, 24
 %endif
     RET
@@ -1501,10 +1482,10 @@ cglobal pixel_sad_x4_%1x%2_cache%3_%6
     CHECK_SPLIT r4m, %1, %3
     jmp pixel_sad_x4_%1x%2_%4
 .split:
-%ifdef ARCH_X86_64
-    PROLOGUE 6,7
-    mov  r11,  r6mp
-%ifdef WIN64
+%if ARCH_X86_64
+    PROLOGUE 6,9
+    mov  r8,  r6mp
+%if WIN64
     movsxd r5, r5d
 %endif
     push r4
@@ -1513,34 +1494,34 @@ cglobal pixel_sad_x4_%1x%2_cache%3_%6
     mov  r2, r1
     mov  r1, FENC_STRIDE
     mov  r3, r5
-    mov  r10, r0
+    mov  r7, r0
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11], eax
-%ifdef WIN64
+    mov  [r8], eax
+%if WIN64
     mov  r2, [rsp]
 %else
     pop  r2
 %endif
-    mov  r0, r10
+    mov  r0, r7
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11+4], eax
-%ifdef WIN64
+    mov  [r8+4], eax
+%if WIN64
     mov  r2, [rsp+8]
 %else
     pop  r2
 %endif
-    mov  r0, r10
+    mov  r0, r7
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11+8], eax
-%ifdef WIN64
+    mov  [r8+8], eax
+%if WIN64
     mov  r2, [rsp+16]
 %else
     pop  r2
 %endif
-    mov  r0, r10
+    mov  r0, r7
     call pixel_sad_%1x%2_cache%3_%5
-    mov  [r11+12], eax
-%ifdef WIN64
+    mov  [r8+12], eax
+%if WIN64
     add  rsp, 24
 %endif
     RET
@@ -1580,7 +1561,7 @@ cglobal pixel_sad_x4_%1x%2_cache%3_%6
 ; instantiate the aligned sads
 
 INIT_MMX
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 SAD16_CACHELINE_FUNC_MMX2  8, 32
 SAD16_CACHELINE_FUNC_MMX2 16, 32
 SAD8_CACHELINE_FUNC_MMX2   4, 32
@@ -1593,7 +1574,7 @@ SAD8_CACHELINE_FUNC_MMX2   4, 64
 SAD8_CACHELINE_FUNC_MMX2   8, 64
 SAD8_CACHELINE_FUNC_MMX2  16, 64
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 SADX34_CACHELINE_FUNC 16, 16, 32, mmx2, mmx2, mmx2
 SADX34_CACHELINE_FUNC 16,  8, 32, mmx2, mmx2, mmx2
 SADX34_CACHELINE_FUNC  8, 16, 32, mmx2, mmx2, mmx2
@@ -1604,7 +1585,7 @@ SADX34_CACHELINE_FUNC 16,  8, 64, mmx2, mmx2, mmx2
 SADX34_CACHELINE_FUNC  8, 16, 64, mmx2, mmx2, mmx2
 SADX34_CACHELINE_FUNC  8,  8, 64, mmx2, mmx2, mmx2
 
-%ifndef ARCH_X86_64
+%if ARCH_X86_64 == 0
 SAD16_CACHELINE_FUNC sse2, 8
 SAD16_CACHELINE_FUNC sse2, 16
 %assign i 1

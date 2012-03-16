@@ -1,7 +1,7 @@
 /*****************************************************************************
  * checkasm.c: assembly check tool
  *****************************************************************************
- * Copyright (C) 2003-2011 x264 project
+ * Copyright (C) 2003-2012 x264 project
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
@@ -164,6 +164,8 @@ static void print_bench(void)
             if( k < j )
                 continue;
             printf( "%s_%s%s: %"PRId64"\n", benchs[i].name,
+                    b->cpu&X264_CPU_AVX2 ? "avx2" :
+                    b->cpu&X264_CPU_FMA3 ? "fma3" :
                     b->cpu&X264_CPU_FMA4 ? "fma4" :
                     b->cpu&X264_CPU_XOP ? "xop" :
                     b->cpu&X264_CPU_AVX ? "avx" :
@@ -182,6 +184,9 @@ static void print_bench(void)
                     b->cpu&X264_CPU_SHUFFLE_IS_FAST && !(b->cpu&X264_CPU_SSE4) ? "_fastshuffle" :
                     b->cpu&X264_CPU_SSE_MISALIGN ? "_misalign" :
                     b->cpu&X264_CPU_LZCNT ? "_lzcnt" :
+                    b->cpu&X264_CPU_BMI2 ? "_bmi2" :
+                    b->cpu&X264_CPU_TBM ? "_tbm" :
+                    b->cpu&X264_CPU_BMI1 ? "_bmi1" :
                     b->cpu&X264_CPU_FAST_NEON_MRC ? "_fast_mrc" :
                     b->cpu&X264_CPU_SLOW_CTZ ? "_slow_ctz" :
                     b->cpu&X264_CPU_SLOW_ATOM ? "_slow_atom" : "",
@@ -426,6 +431,10 @@ static int check_pixel( int cpu_ref, int cpu_new )
         }
     report( "pixel hadamard_ac :" );
 
+    // maximize sum
+    for( int i = 0; i < 32; i++ )
+        for( int j = 0; j < 16; j++ )
+            pbuf4[16*i+j] = -((i+j)&1) & PIXEL_MAX;
     ok = 1; used_asm = 0;
     if( pixel_asm.vsad != pixel_ref.vsad )
     {
@@ -434,13 +443,17 @@ static int check_pixel( int cpu_ref, int cpu_new )
             int res_c, res_asm;
             set_func_name( "vsad" );
             used_asm = 1;
-            res_c   = call_c( pixel_c.vsad,   pbuf1, 16, h );
-            res_asm = call_a( pixel_asm.vsad, pbuf1, 16, h );
-            if( res_c != res_asm )
+            for( int j = 0; j < 2 && ok; j++ )
             {
-                ok = 0;
-                fprintf( stderr, "vsad: height=%d, %d != %d\n", h, res_c, res_asm );
-                break;
+                pixel *p = j ? pbuf4 : pbuf1;
+                res_c   = call_c( pixel_c.vsad,   p, 16, h );
+                res_asm = call_a( pixel_asm.vsad, p, 16, h );
+                if( res_c != res_asm )
+                {
+                    ok = 0;
+                    fprintf( stderr, "vsad: height=%d, %d != %d\n", h, res_c, res_asm );
+                    break;
+                }
             }
         }
     }
@@ -721,8 +734,8 @@ static int check_dct( int cpu_ref, int cpu_new )
         {
             int cond_a = (i < 2) ? 1 : ((j&3) == 0 || (j&3) == (i-1));
             int cond_b = (i == 0) ? 1 : !cond_a;
-            enc[0] = enc[1] = cond_a ? PIXEL_MAX : 0;
-            enc[2] = enc[3] = cond_b ? PIXEL_MAX : 0;
+            enc[0] = enc[1] = enc[4] = enc[5] = enc[8] = enc[9] = enc[12] = enc[13] = cond_a ? PIXEL_MAX : 0;
+            enc[2] = enc[3] = enc[6] = enc[7] = enc[10] = enc[11] = enc[14] = enc[15] = cond_b ? PIXEL_MAX : 0;
 
             for( int k = 0; k < 4; k++ )
                 dec[k] = PIXEL_MAX - enc[k];
@@ -747,6 +760,12 @@ static int check_dct( int cpu_ref, int cpu_new )
             { \
                 ok = 0; \
                 fprintf( stderr, #name " [FAILED]\n" ); \
+                for( int k = 0; k < size; k++ )\
+                    printf( "%d ", ((dctcoef*)t1)[k] );\
+                printf("\n");\
+                for( int k = 0; k < size; k++ )\
+                    printf( "%d ", ((dctcoef*)t2)[k] );\
+                printf("\n");\
                 break; \
             } \
             call_c( dct_c.name, t1, enc, dec ); \
@@ -894,12 +913,24 @@ static int check_dct( int cpu_ref, int cpu_new )
     { \
         set_func_name( "zigzag_"#name"_%s", interlace?"field":"frame" ); \
         used_asm = 1; \
-        memcpy(dct, buf1, size*sizeof(dctcoef)); \
+        for( int i = 0; i < size*size; i++ ) \
+            dct[i] = i; \
         call_c( zigzag_c[interlace].name, t1, dct ); \
         call_a( zigzag_asm[interlace].name, t2, dct ); \
-        if( memcmp( t1, t2, size*sizeof(dctcoef) ) ) \
+        if( memcmp( t1, t2, size*size*sizeof(dctcoef) ) ) \
         { \
             ok = 0; \
+            for( int i = 0; i < 2; i++ ) \
+            { \
+                dctcoef *d = (dctcoef*)(i ? t2 : t1); \
+                for( int j = 0; j < size; j++ ) \
+                { \
+                    for( int k = 0; k < size; k++ ) \
+                        fprintf( stderr, "%2d ", d[k+j*8] ); \
+                    fprintf( stderr, "\n" ); \
+                } \
+                fprintf( stderr, "\n" ); \
+            } \
             fprintf( stderr, #name " [FAILED]\n" ); \
         } \
     }
@@ -983,8 +1014,8 @@ static int check_dct( int cpu_ref, int cpu_new )
     for( interlace = 0; interlace <= 1; interlace++ )
     {
         ok = 1; used_asm = 0;
-        TEST_ZIGZAG_SCAN( scan_8x8, level1, level2, (void*)dct1, 64 );
-        TEST_ZIGZAG_SCAN( scan_4x4, level1, level2, dct1[0], 16  );
+        TEST_ZIGZAG_SCAN( scan_8x8, level1, level2, dct1[0], 8 );
+        TEST_ZIGZAG_SCAN( scan_4x4, level1, level2, dct1[0], 4 );
         TEST_ZIGZAG_SUB( sub_4x4, level1, level2, 16 );
         TEST_ZIGZAG_SUBAC( sub_4x4ac, level1, level2 );
         report( interlace ? "zigzag_field :" : "zigzag_frame :" );
@@ -1110,7 +1141,6 @@ static int check_mc( int cpu_ref, int cpu_new )
 
 #define MC_TEST_AVG( name, weight ) \
 { \
-    ok = 1, used_asm = 0; \
     for( int i = 0; i < 12; i++ ) \
     { \
         memcpy( pbuf3, pbuf1+320, 320 * sizeof(pixel) ); \
@@ -1132,13 +1162,13 @@ static int check_mc( int cpu_ref, int cpu_new )
     } \
 }
 
+    ok = 1, used_asm = 0;
     for( int w = -63; w <= 127 && ok; w++ )
         MC_TEST_AVG( avg, w );
     report( "mc wpredb :" );
 
 #define MC_TEST_WEIGHT( name, weight, aligned ) \
     int align_off = (aligned ? 0 : rand()%16); \
-    ok = 1, used_asm = 0; \
     for( int i = 1; i <= 5; i++ ) \
     { \
         ALIGNED_16( pixel buffC[640] ); \
@@ -1427,11 +1457,11 @@ static int check_mc( int cpu_ref, int cpu_new )
 
     if( mc_a.mbtree_propagate_cost != mc_ref.mbtree_propagate_cost )
     {
+        ok = 1; used_asm = 1;
         x264_emms();
         for( int i = 0; i < 10; i++ )
         {
             float fps_factor = (rand()&65535) / 256.;
-            ok = 1; used_asm = 1;
             set_func_name( "mbtree_propagate" );
             int *dsta = (int*)buf3;
             int *dstc = dsta+400;
@@ -1557,11 +1587,15 @@ static int check_deblock( int cpu_ref, int cpu_new )
     TEST_DEBLOCK( deblock_luma[1], 1, tcs[i] );
     TEST_DEBLOCK( deblock_h_chroma_420, 0, tcs[i] );
     TEST_DEBLOCK( deblock_h_chroma_422, 0, tcs[i] );
+    TEST_DEBLOCK( deblock_chroma_420_mbaff, 0, tcs[i] );
+    TEST_DEBLOCK( deblock_chroma_422_mbaff, 0, tcs[i] );
     TEST_DEBLOCK( deblock_chroma[1], 1, tcs[i] );
     TEST_DEBLOCK( deblock_luma_intra[0], 0 );
     TEST_DEBLOCK( deblock_luma_intra[1], 1 );
     TEST_DEBLOCK( deblock_h_chroma_420_intra, 0 );
     TEST_DEBLOCK( deblock_h_chroma_422_intra, 0 );
+    TEST_DEBLOCK( deblock_chroma_420_intra_mbaff, 0 );
+    TEST_DEBLOCK( deblock_chroma_422_intra_mbaff, 0 );
     TEST_DEBLOCK( deblock_chroma_intra[1], 1 );
 
     if( db_a.deblock_strength != db_ref.deblock_strength )
@@ -2001,6 +2035,7 @@ static int check_quant( int cpu_ref, int cpu_new )
             int result_c = call_c( qf_c.lastname, dct1+ac, &runlevel_c ); \
             int result_a = call_a( qf_a.lastname, dct1+ac, &runlevel_a ); \
             if( result_c != result_a || runlevel_c.last != runlevel_a.last || \
+                runlevel_c.mask != runlevel_a.mask || \
                 memcmp(runlevel_c.level, runlevel_a.level, sizeof(dctcoef)*result_c) || \
                 memcmp(runlevel_c.run, runlevel_a.run, sizeof(uint8_t)*(result_c-1)) ) \
             { \
@@ -2375,7 +2410,32 @@ static int check_all_flags( void )
     if( x264_cpu_detect() & X264_CPU_XOP )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_XOP, "XOP" );
     if( x264_cpu_detect() & X264_CPU_FMA4 )
+    {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_FMA4, "FMA4" );
+        cpu1 &= ~X264_CPU_FMA4;
+    }
+    if( x264_cpu_detect() & X264_CPU_FMA3 )
+    {
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_FMA3, "FMA3" );
+        cpu1 &= ~X264_CPU_FMA3;
+    }
+    if( x264_cpu_detect() & X264_CPU_BMI1 )
+    {
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_BMI1, "BMI1" );
+        if( x264_cpu_detect() & X264_CPU_TBM )
+        {
+            ret |= add_flags( &cpu0, &cpu1, X264_CPU_TBM, "TBM" );
+            cpu1 &= ~X264_CPU_TBM;
+        }
+        if( x264_cpu_detect() & X264_CPU_BMI2 )
+        {
+            ret |= add_flags( &cpu0, &cpu1, X264_CPU_BMI2, "BMI2" );
+            cpu1 &= ~X264_CPU_BMI2;
+        }
+        cpu1 &= ~X264_CPU_BMI1;
+    }
+    if( x264_cpu_detect() & X264_CPU_AVX2 )
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_AVX2, "AVX2" );
 #elif ARCH_PPC
     if( x264_cpu_detect() & X264_CPU_ALTIVEC )
     {

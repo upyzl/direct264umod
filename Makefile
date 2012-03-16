@@ -2,7 +2,14 @@
 
 include config.mak
 
+vpath %.c $(SRCPATH)
+vpath %.h $(SRCPATH)
+vpath %.S $(SRCPATH)
+vpath %.asm $(SRCPATH)
+vpath %.rc $(SRCPATH)
+
 all: default
+default:
 
 SRCS = common/mc.c common/predict.c common/pixel.c common/macroblock.c \
        common/frame.c common/dct.c common/cpu.c common/cabac.c \
@@ -21,6 +28,9 @@ SRCCLI = x264.c input/input.c input/timecode.c input/rawinput.c input/y4m.c \
          filters/video/select_every.c filters/video/crop.c filters/video/depth.c
 
 SRCSO =
+OBJS =
+OBJSO =
+OBJCLI =
 
 OBJCHK = tools/checkasm.o
 
@@ -91,16 +101,17 @@ X86SRC = $(X86SRC0:%=common/x86/%)
 ifeq ($(ARCH),X86)
 ARCH_X86 = yes
 ASMSRC   = $(X86SRC) common/x86/pixel-32.asm
+ASFLAGS += -DARCH_X86_64=0
 endif
 
 ifeq ($(ARCH),X86_64)
 ARCH_X86 = yes
-ASMSRC   = $(X86SRC:-32.asm=-64.asm)
-ASFLAGS += -DARCH_X86_64 -DNON_MOD16_STACK=0
+ASMSRC   = $(X86SRC:-32.asm=-64.asm) common/x86/trellis-64.asm
+ASFLAGS += -DARCH_X86_64=1 -DNON_MOD16_STACK=0
 endif
 
 ifdef ARCH_X86
-ASFLAGS += -Icommon/x86/ -DNON_MOD16_STACK=0
+ASFLAGS += -I$(SRCPATH)/common/x86/ -DNON_MOD16_STACK=0
 SRCS   += common/x86/mc-c.c common/x86/predict-c.c
 OBJASM  = $(ASMSRC:%.asm=%.o)
 $(OBJASM): common/x86/x86inc.asm common/x86/x86util.asm
@@ -140,20 +151,20 @@ ifneq ($(HAVE_GETOPT_LONG),1)
 SRCCLI += extras/getopt.c
 endif
 
-ifneq ($(SONAME),)
 ifeq ($(SYS),WINDOWS)
-SRCSO += x264dll.c
+OBJCLI += $(if $(RC), x264res.o)
+ifneq ($(SONAME),)
+SRCSO  += x264dll.c
+OBJSO  += $(if $(RC), x264res.dll.o)
+
 endif
 endif
 
-OBJS = $(SRCS:%.c=%.o)
-OBJCLI = $(SRCCLI:%.c=%.o)
-OBJSO = $(SRCSO:%.c=%.o)
-DEP  = depend
+OBJS   += $(SRCS:%.c=%.o)
+OBJCLI += $(SRCCLI:%.c=%.o)
+OBJSO  += $(SRCSO:%.c=%.o)
 
 .PHONY: all default fprofiled generate use clean distclean install uninstall lib-static lib-shared cli install-lib-dev install-lib-static install-lib-shared install-cli
-
-default: $(DEP)
 
 cli: x264$(EXE)
 lib-static: $(LIBX264)
@@ -184,9 +195,15 @@ $(OBJS) $(OBJASM) $(OBJSO) $(OBJCLI) $(OBJCHK): .depend
 	$(AS) $(ASFLAGS) -o $@ $<
 	-@ $(if $(STRIP), $(STRIP) -x $@) # delete local/anonymous symbols, so they don't show up in oprofile
 
+%.dll.o: %.rc x264.h
+	$(RC)$@ -DDLL $<
+
+%.o: %.rc x264.h
+	$(RC)$@ $<
+
 .depend: config.mak
 	@rm -f .depend
-	@$(foreach SRC, $(SRCS) $(SRCCLI) $(SRCSO), $(CC) $(CFLAGS) $(SRC) $(DEPMT) $(SRC:%.c=%.o) $(DEPMM) 1>> .depend;)
+	@$(foreach SRC, $(addprefix $(SRCPATH)/, $(SRCS) $(SRCCLI) $(SRCSO)), $(CC) $(CFLAGS) $(SRC) $(DEPMT) $(SRC:$(SRCPATH)/%.c=%.o) $(DEPMM) 1>> .depend;)
 
 config.mak:
 	./configure
@@ -252,7 +269,7 @@ install-lib-dev:
 	install -d $(DESTDIR)$(includedir)
 	install -d $(DESTDIR)$(libdir)
 	install -d $(DESTDIR)$(libdir)/pkgconfig
-	install -m 644 x264.h $(DESTDIR)$(includedir)
+	install -m 644 $(SRCPATH)/x264.h $(DESTDIR)$(includedir)
 	install -m 644 x264_config.h $(DESTDIR)$(includedir)
 	install -m 644 x264.pc $(DESTDIR)$(libdir)/pkgconfig
 

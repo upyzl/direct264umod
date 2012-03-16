@@ -1,7 +1,7 @@
 /*****************************************************************************
  * x264: top-level x264cli functions
  *****************************************************************************
- * Copyright (C) 2003-2011 x264 project
+ * Copyright (C) 2003-2012 x264 project
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
@@ -373,19 +373,22 @@ static void print_csp_names( int longhelp )
     line_len = strlen( INDENT );
     for( j = PIX_FMT_NONE+1; j < PIX_FMT_NB; j++ )
     {
-        const char *pfname = av_pix_fmt_descriptors[j].name;
-        size_t name_len = strlen( pfname );
-        if( line_len + name_len > (80 - strlen( ", " )) )
+        const char *pfname = av_get_pix_fmt_name( i );
+        if( pfname )
         {
-            printf( "\n" INDENT );
-            line_len = strlen( INDENT );
-        }
-        printf( "%s", pfname );
-        line_len += name_len;
-        if( j+1 < PIX_FMT_NB )
-        {
-            printf( ", " );
-            line_len += 2;
+            size_t name_len = strlen( pfname );
+            if( line_len + name_len > (80 - strlen( ", " )) )
+            {
+                printf( "\n" INDENT );
+                line_len = strlen( INDENT );
+            }
+            printf( "%s", pfname );
+            line_len += name_len;
+            if( i+1 < PIX_FMT_NB )
+            {
+                printf( ", " );
+                line_len += 2;
+            }
         }
     }
 #endif

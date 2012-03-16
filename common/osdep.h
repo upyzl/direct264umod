@@ -1,7 +1,7 @@
 /*****************************************************************************
  * osdep.h: platform-specific code
  *****************************************************************************
- * Copyright (C) 2007-2011 x264 project
+ * Copyright (C) 2007-2012 x264 project
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
@@ -32,16 +32,10 @@
 #define _FILE_OFFSET_BITS 64
 #include <stdio.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 
 #ifndef _MSC_VER
 #include "config.h"
-#endif
-
-#if HAVE_STDINT_H
-#include <stdint.h>
-#endif
-#if defined(_MSC_VER) || !HAVE_STDINT_H
-#include <inttypes.h>
 #endif
 
 #ifdef _WIN32
@@ -76,8 +70,8 @@
 #endif
 
 #ifndef X264_VERSION
-#define X264_VERSION " r2120" // no configure script for msvc
-#define X264_POINTVER "0.120.2120"
+#define X264_VERSION " r2171" // no configure script for msvc
+#define X264_POINTVER "0.120.2171"
 #endif
 
 #if !defined(isfinite) && (SYS_OPENBSD || SYS_SunOS)

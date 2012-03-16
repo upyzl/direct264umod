@@ -1,7 +1,7 @@
 ;*****************************************************************************
 ;* const-a.asm: x86 global constants
 ;*****************************************************************************
-;* Copyright (C) 2010-2011 x264 project
+;* Copyright (C) 2010-2012 x264 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Jason Garrett-Glaser <darkshikari@gmail.com>
@@ -38,6 +38,7 @@ const pb_shuf8x8c, db 0,0,0,0,2,2,2,2,4,4,4,4,6,6,6,6
 
 const pw_1,        times 8 dw 1
 const pw_2,        times 8 dw 2
+const pw_m2,       times 8 dw -2
 const pw_4,        times 8 dw 4
 const pw_8,        times 8 dw 8
 const pw_16,       times 8 dw 16
