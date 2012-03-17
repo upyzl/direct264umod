@@ -755,7 +755,7 @@ int quant_trellis_cabac( x264_t *h, dctcoef *dct,
     // position, so the order doesn't matter, and we don't even have to update their contexts.
     // in 8x8 blocks, some positions share contexts, so we'll just have to hope that
     // cabac isn't too sensitive.
-    int i = last_nnz;
+    i = last_nnz;
 #define TRELLIS_LOOP(ctx_hi)\
     for( ; i >= b_ac; i-- )\
     {\
@@ -923,7 +923,7 @@ int quant_trellis_cavlc( x264_t *h, dctcoef *dct,
     const uint32_t *coef_weight2 = b_8x8 ? x264_dct8_weight2_tab : x264_dct4_weight2_tab;
     int delta_distortion[16];
     int64_t score = 1ULL<<62;
-    int i, j;
+    int i, j, last_nnz;
     const int f = 1<<15;
     int nC = b_chroma && dc ? 3 + (num_coefs>>2)
                             : ct_index[x264_mb_predict_non_zero_code( h, !b_chroma && dc ? (idx - LUMA_DC)*16 : idx )];

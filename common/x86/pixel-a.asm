@@ -1943,7 +1943,7 @@ cglobal intra_satd_x3_4x4, 3,3
     movd        [r2+0], m0 ; i4x4_v satd
     movd        [r2+4], m4 ; i4x4_h satd
     movd        [r2+8], m5 ; i4x4_dc satd
-%%if ARCH_X86_64 == 0
+%if ARCH_X86_64 == 0
     ADD         esp, 16
 %endif
     RET
@@ -1965,6 +1965,7 @@ cglobal intra_satd_x3_16x16, 0,5
 %define top_1d  rsp+32 ; size 32
 %define left_1d rsp    ; size 32
     movifnidn   r1,  r1mp
+
     pxor        m7, m7
     mova [sums+ 0], m7
     mova [sums+ 8], m7
@@ -2001,8 +2002,8 @@ cglobal intra_satd_x3_16x16, 0,5
     SUM4x3 m6, [left_1d+8*(r3+4)], [top_1d+8*(r4+4)]
     pavgw       m4, m7
     pavgw       m5, m7
-    paddw       m0, [sums+ 0]  ; i16x16_v satd
-    paddw       m4, [sums+ 8]  ; i16x16_h satd
+    paddw       m0, [sums+ 0] ; i16x16_v satd
+    paddw       m4, [sums+ 8] ; i16x16_h satd
     paddw       m5, [sums+16] ; i16x16_dc satd
     mova [sums+ 0], m0
     mova [sums+ 8], m4
