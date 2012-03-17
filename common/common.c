@@ -38,6 +38,7 @@ const int x264_bit_depth = BIT_DEPTH;
 const int x264_chroma_format = X264_CHROMA_FORMAT;
 
 static void x264_log_default( void *, int, const char *, va_list );
+static void x264_log_file( char *, int, const char *, va_list );
 
 /****************************************************************************
  * x264_param_default:
@@ -69,6 +70,7 @@ void x264_param_default( x264_param_t *param )
     param->i_fps_num       = 25;
     param->i_fps_den       = 1;
     param->i_level_idc     = -1;
+    param->b_level_force   = 0;
     param->i_slice_max_size = 0;
     param->i_slice_max_mbs = 0;
     param->i_slice_count = 0;
@@ -123,6 +125,7 @@ void x264_param_default( x264_param_t *param )
     param->pf_log = x264_log_default;
     param->p_log_private = NULL;
     param->i_log_level = X264_LOG_INFO;
+    param->i_log_file_level = X264_LOG_INFO;
 
     /* */
     param->analyse.intra = X264_ANALYSE_I4x4 | X264_ANALYSE_I8x8;
@@ -133,6 +136,7 @@ void x264_param_default( x264_param_t *param )
     param->analyse.f_psy_rd = 1.0;
     param->analyse.b_psy = 1;
     param->analyse.f_psy_trellis = 0;
+    param->analyse.i_fgo = 0;
     param->analyse.i_me_range = 16;
     param->analyse.i_subpel_refine = 7;
     param->analyse.b_mixed_references = 1;
@@ -428,6 +432,7 @@ void x264_param_apply_fastfirstpass( x264_param_t *param )
         param->analyse.i_subpel_refine = X264_MIN( 2, param->analyse.i_subpel_refine );
         param->analyse.i_trellis = 0;
         param->analyse.b_fast_pskip = 1;
+        param->analyse.i_fgo = 0;
     }
 }
 
@@ -661,6 +666,8 @@ int x264_param_parse( x264_param_t *p, const char *name, const char *value )
         else
             p->i_level_idc = atoi(value);
     }
+    OPT("level-force")
+        p->b_level_force = atobool(value);
     OPT("bluray-compat")
         p->b_bluray_compat = atobool(value);
     OPT("sar")
@@ -860,6 +867,13 @@ int x264_param_parse( x264_param_t *p, const char *name, const char *value )
     }
     OPT("log")
         p->i_log_level = atoi(value);
+    OPT("log-file")
+        p->psz_log_file = strdup(value);
+    OPT("log-file-level")
+        if( !parse_enum( value, x264_log_level_names, &p->i_log_file_level ) )
+            p->i_log_file_level += X264_LOG_NONE;
+        else
+            p->i_log_file_level = atoi(value);
 #if HAVE_VISUALIZE
     OPT("visualize")
         p->b_visualize = atobool(value);
@@ -960,9 +974,23 @@ int x264_param_parse( x264_param_t *p, const char *name, const char *value )
     OPT("ratetol")
         p->rc.f_rate_tolerance = !strncmp("inf", value, 3) ? 1e9 : atof(value);
     OPT("vbv-maxrate")
-        p->rc.i_vbv_max_bitrate = atoi(value);
+        if( !strcmp(value, "auto_high10") )
+            p->rc.i_vbv_max_bitrate = X264_VBV_MAXRATE_HIGH10;
+        else if( !strcmp(value, "auto_high") )
+            p->rc.i_vbv_max_bitrate = X264_VBV_MAXRATE_HIGH;
+        else if( !strcmp(value, "auto_main") )
+            p->rc.i_vbv_max_bitrate = X264_VBV_MAXRATE_MAIN;
+        else
+            p->rc.i_vbv_max_bitrate = atoi(value);
     OPT("vbv-bufsize")
-        p->rc.i_vbv_buffer_size = atoi(value);
+        if( !strcmp(value, "auto_high10") )
+            p->rc.i_vbv_buffer_size = X264_VBV_BUFSIZE_HIGH10;
+        else if( !strcmp(value, "auto_high") )
+            p->rc.i_vbv_buffer_size = X264_VBV_BUFSIZE_HIGH;
+        else if( !strcmp(value, "auto_main") )
+            p->rc.i_vbv_buffer_size = X264_VBV_BUFSIZE_MAIN;
+        else
+            p->rc.i_vbv_buffer_size = atoi(value);
     OPT("vbv-init")
         p->rc.f_vbv_buffer_init = atof(value);
     OPT2("ipratio", "ip-factor")
@@ -973,6 +1001,10 @@ int x264_param_parse( x264_param_t *p, const char *name, const char *value )
         p->rc.i_aq_mode = atoi(value);
     OPT("aq-strength")
         p->rc.f_aq_strength = atof(value);
+    OPT("fgo")
+        p->analyse.i_fgo = atoi(value);
+    OPT("fade-compensate")
+        p->rc.f_fade_compensate = atof(value);
     OPT("pass")
     {
         int pass = x264_clip3( atoi(value), 0, 3 );
@@ -1056,6 +1088,44 @@ void x264_log( x264_t *h, int i_level, const char *psz_fmt, ... )
         else
             h->param.pf_log( h->param.p_log_private, i_level, psz_fmt, arg );
         va_end( arg );
+    }
+
+    if( h && h->param.psz_log_file && i_level <= h->param.i_log_file_level )
+    {
+        va_list arg;
+        va_start( arg, psz_fmt );
+        x264_log_file( h->param.psz_log_file, i_level, psz_fmt, arg );
+        va_end( arg );
+    }
+}
+
+static void x264_log_file( char *p_file_name, int i_level, const char *psz_fmt, va_list arg )
+{
+    char *psz_prefix;
+    switch( i_level )
+    {
+        case X264_LOG_ERROR:
+            psz_prefix = "error";
+            break;
+        case X264_LOG_WARNING:
+            psz_prefix = "warning";
+            break;
+        case X264_LOG_INFO:
+            psz_prefix = "info";
+            break;
+        case X264_LOG_DEBUG:
+            psz_prefix = "debug";
+            break;
+        default:
+            psz_prefix = "unknown";
+            break;
+    }
+    FILE *p_log_file = fopen( p_file_name, "ab" );
+    if( p_log_file )
+    {
+        fprintf( p_log_file, "x264 [%s]: ", psz_prefix );
+        vfprintf( p_log_file, psz_fmt, arg );
+        fclose( p_log_file );
     }
 }
 
@@ -1295,7 +1365,10 @@ char *x264_param2string( x264_param_t *p, int b_res )
     s += sprintf( s, " subme=%d", p->analyse.i_subpel_refine );
     s += sprintf( s, " psy=%d", p->analyse.b_psy );
     if( p->analyse.b_psy )
+    {
+        s += sprintf( s, " fade_compensate=%.2f", p->rc.f_fade_compensate );
         s += sprintf( s, " psy_rd=%.2f:%.2f", p->analyse.f_psy_rd, p->analyse.f_psy_trellis );
+    }
     s += sprintf( s, " mixed_ref=%d", p->analyse.b_mixed_references );
     s += sprintf( s, " me_range=%d", p->analyse.i_me_range );
     s += sprintf( s, " chroma_me=%d", p->analyse.b_chroma_me );
@@ -1319,6 +1392,7 @@ char *x264_param2string( x264_param_t *p, int b_res )
     s += sprintf( s, " bluray_compat=%d", p->b_bluray_compat );
 
     s += sprintf( s, " constrained_intra=%d", p->b_constrained_intra );
+    s += sprintf( s, " fgo=%d", p->analyse.i_fgo );
 
     s += sprintf( s, " bframes=%d", p->i_bframe );
     if( p->i_bframe )

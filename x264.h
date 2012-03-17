@@ -161,6 +161,8 @@ typedef struct
 #define X264_AQ_NONE                 0
 #define X264_AQ_VARIANCE             1
 #define X264_AQ_AUTOVARIANCE         2
+#define X264_AQ_AUTOVARIANCE_MOD1    3
+#define X264_AQ_AUTOVARIANCE_MOD2    4
 #define X264_B_ADAPT_NONE            0
 #define X264_B_ADAPT_FAST            1
 #define X264_B_ADAPT_TRELLIS         2
@@ -172,6 +174,7 @@ typedef struct
 #define X264_B_PYRAMID_NORMAL        2
 #define X264_KEYINT_MIN_AUTO         0
 #define X264_KEYINT_MAX_INFINITE     (1<<30)
+#define X264_LEVEL_IDC_AUTO          (-1)
 
 static const char * const x264_direct_pred_names[] = { "none", "spatial", "temporal", "auto", 0 };
 static const char * const x264_motion_est_names[] = { "dia", "hex", "umh", "esa", "tesa", 0 };
@@ -183,6 +186,7 @@ static const char * const x264_colorprim_names[] = { "", "bt709", "undef", "", "
 static const char * const x264_transfer_names[] = { "", "bt709", "undef", "", "bt470m", "bt470bg", "smpte170m", "smpte240m", "linear", "log100", "log316", 0 };
 static const char * const x264_colmatrix_names[] = { "GBR", "bt709", "undef", "", "fcc", "bt470bg", "smpte170m", "smpte240m", "YCgCo", 0 };
 static const char * const x264_nal_hrd_names[] = { "none", "vbr", "cbr", 0 };
+static const char * const x264_log_level_names[] = { "none", "error", "warning", "info", "debug", 0 };
 
 /* Colorspace type */
 #define X264_CSP_MASK           0x00ff  /* */
@@ -201,6 +205,7 @@ static const char * const x264_nal_hrd_names[] = { "none", "vbr", "cbr", 0 };
 #define X264_CSP_MAX            0x000c  /* end of list */
 #define X264_CSP_VFLIP          0x1000  /* the csp is vertically flipped */
 #define X264_CSP_HIGH_DEPTH     0x2000  /* the csp has a depth of 16 bits per pixel component */
+#define X264_CSP_SKIP_DEPTH_FILTER 0x0100  /* HACK: totally skips depth filter to prevent dither error */
 
 /* Slice type */
 #define X264_TYPE_AUTO          0x0000  /* Let x264 choose the right type */
@@ -241,6 +246,14 @@ typedef struct
     struct x264_param_t *param;
 } x264_zone_t;
 
+/* Auto VBV*/
+#define X264_VBV_MAXRATE_HIGH10 -3 /* Set the VBV maxrate to fit in the target level of High10 Profile */
+#define X264_VBV_MAXRATE_HIGH   -2 /* Set the VBV maxrate to fit in the target level of High Profile */
+#define X264_VBV_MAXRATE_MAIN   -1 /* Set the VBV maxrate to fit in the target level of Main Profile */
+#define X264_VBV_BUFSIZE_HIGH10 -3 /* Set the VBV bufsize to fit in the target level of High10 Profile */
+#define X264_VBV_BUFSIZE_HIGH   -2 /* Set the VBV bufsize to fit in the target level of High Profile */
+#define X264_VBV_BUFSIZE_MAIN   -1 /* Set the VBV bufsize to fit in the target level of Main Profile */
+
 typedef struct x264_param_t
 {
     /* CPU flags */
@@ -256,6 +269,7 @@ typedef struct x264_param_t
     int         i_height;
     int         i_csp;         /* CSP of encoded bitstream */
     int         i_level_idc;
+    int         b_level_force; /* force ref etc. for level */
     int         i_frame_total; /* number of frames to encode if known, else 0 */
 
     /* NAL HRD
@@ -326,6 +340,8 @@ typedef struct x264_param_t
     void        (*pf_log)( void *, int i_level, const char *psz, va_list );
     void        *p_log_private;
     int         i_log_level;
+    int         i_log_file_level;
+    char        *psz_log_file;
     int         b_visualize;
     char        *psz_dump_yuv;  /* filename for reconstructed frames */
 
@@ -352,6 +368,7 @@ typedef struct x264_param_t
         int          b_fast_pskip; /* early SKIP detection on P-frames */
         int          b_dct_decimate; /* transform coefficient thresholding on P-frames */
         int          i_noise_reduction; /* adaptive pseudo-deadzone */
+        int          i_fgo; /* psy film grain optimization */
         float        f_psy_rd; /* Psy RD strength */
         float        f_psy_trellis; /* Psy trellis strength */
         int          b_psy; /* Toggle all psy optimizations */
@@ -385,6 +402,7 @@ typedef struct x264_param_t
 
         int         i_aq_mode;      /* psy adaptive QP. (X264_AQ_*) */
         float       f_aq_strength;
+        float       f_fade_compensate; /* Give more bits to fades. */
         int         b_mb_tree;      /* Macroblock-tree ratecontrol. */
         int         i_lookahead;
 

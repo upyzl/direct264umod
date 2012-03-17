@@ -47,15 +47,19 @@ void x264_register_vid_filters( void )
     extern cli_vid_filter_t source_filter;
     first_filter = &source_filter;
     REGISTER_VFILTER( cache );
-    REGISTER_VFILTER( crop );
+    REGISTER_VFILTER( depth );
     REGISTER_VFILTER( fix_vfr_pts );
+    REGISTER_VFILTER( hqdn3d );
+    REGISTER_VFILTER( crop );
+    REGISTER_VFILTER( pad );
     REGISTER_VFILTER( resize );
     REGISTER_VFILTER( select_every );
-    REGISTER_VFILTER( depth );
+    REGISTER_VFILTER( vflip );
 #if HAVE_AVS
     REGISTER_VFILTER( subtitle );
 #endif
 #if HAVE_GPL
+    REGISTER_GPL_VFILTER( yadif );
 #endif
 }
 

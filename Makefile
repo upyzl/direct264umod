@@ -25,7 +25,8 @@ SRCCLI = x264.c input/input.c input/timecode.c input/rawinput.c input/y4m.c \
          output/flv.c output/flv_bytestream.c output/avi.c filters/filters.c \
          filters/video/video.c filters/video/source.c filters/video/internal.c \
          filters/video/resize.c filters/video/cache.c filters/video/fix_vfr_pts.c \
-         filters/video/select_every.c filters/video/crop.c filters/video/depth.c
+         filters/video/select_every.c filters/video/crop.c filters/video/depth.c \
+         filters/video/hqdn3d.c filters/video/pad.c filters/video/vflip.c
 
 SRCSO =
 OBJS =
@@ -38,7 +39,12 @@ CONFIG := $(shell cat config.h)
 
 # GPL-only files
 ifneq ($(findstring HAVE_GPL 1, $(CONFIG)),)
-SRCCLI +=
+SRCCLI += filters/video/yadif.c filters/video/yadif_filter_line.c
+
+ifeq ($(ARCH),X86)
+SRCCLI += filters/video/x86/yadif_filter_line.c
+endif
+
 endif
 
 # Optional module sources
