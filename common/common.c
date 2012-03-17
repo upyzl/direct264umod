@@ -165,7 +165,7 @@ void x264_param_default( x264_param_t *param )
     memset( param->cqm_8ic, 16, sizeof( param->cqm_8ic ) );
     memset( param->cqm_8pc, 16, sizeof( param->cqm_8pc ) );
 
-    param->i_sei_opts = 0;
+    param->i_sei_opts = 2;
     param->b_timed_scenecut = 0;
     param->b_repeat_headers = 1;
     param->b_annexb = 1;

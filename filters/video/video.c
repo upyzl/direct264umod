@@ -42,6 +42,9 @@ static void register_vid_filter( cli_vid_filter_t *new_filter )
     register_vid_filter( &name##_filter );\
 }
 
+#define REGISTER_GPL_VFILTER( name ) \
+    if( HAVE_GPL ) REGISTER_VFILTER( name )
+
 void x264_register_vid_filters( void )
 {
     extern cli_vid_filter_t source_filter;
